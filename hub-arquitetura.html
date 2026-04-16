@@ -332,9 +332,123 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   main { padding: 16px; } header, nav { padding-left: 16px; padding-right: 16px; }
 }
+
+/* ══ SETUP SCREEN ══ */
+#setupScreen {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  overflow-y: auto;
+}
+.setup-wrap {
+  max-width: 560px; margin: 60px auto 60px; padding: 0 24px;
+}
+.setup-logo {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 36px;
+}
+.setup-logo svg { flex-shrink: 0; }
+.setup-logo h1 { font-size: 20px; font-weight: 700; }
+.setup-logo p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.setup-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px;
+}
+.setup-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.setup-card .setup-desc { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.6; }
+.setup-field { margin-bottom: 20px; }
+.setup-field label {
+  display: block; font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  color: var(--muted); margin-bottom: 6px;
+}
+.setup-field .field-hint {
+  font-size: 11px; color: var(--muted); margin-top: 5px;
+}
+.setup-field .field-hint a { color: var(--accent2); text-decoration: none; }
+.setup-field .field-hint a:hover { text-decoration: underline; }
+.setup-field input {
+  width: 100%; background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); padding: 10px 14px;
+  font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s;
+}
+.setup-field input:focus { border-color: var(--accent); }
+.setup-field input.optional { opacity: .75; }
+.setup-test-result {
+  padding: 10px 14px; border-radius: 8px; font-size: 13px;
+  margin-bottom: 20px; display: none;
+}
+.setup-test-result.ok  { background: rgba(67,224,151,.12); color: var(--green); border: 1px solid rgba(67,224,151,.3); }
+.setup-test-result.err { background: rgba(255,92,124,.12); color: var(--red);   border: 1px solid rgba(255,92,124,.3); }
+.setup-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
+
+<!-- ══ SETUP SCREEN ══ -->
+<div id="setupScreen">
+  <div class="setup-wrap">
+    <div class="setup-logo">
+      <svg width="38" height="38" viewBox="0 0 38 38" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="19" cy="19" r="19" fill="#E05530"/>
+        <text x="19" y="17" text-anchor="middle" fill="white" font-size="9.5" font-weight="700" font-family="Segoe UI,system-ui,sans-serif" letter-spacing="0.5">std.</text>
+        <text x="19" y="28" text-anchor="middle" fill="white" font-size="9.5" font-weight="700" font-family="Segoe UI,system-ui,sans-serif" letter-spacing="1">rocha</text>
+      </svg>
+      <div>
+        <h1>Studio Rocha · Hub</h1>
+        <p>Configuração inicial das credenciais</p>
+      </div>
+    </div>
+
+    <div class="setup-card">
+      <h2>Configuração Inicial</h2>
+      <p class="setup-desc">
+        Para usar o Hub você precisa informar suas chaves de API uma única vez.<br>
+        Elas ficam salvas localmente no seu navegador e não são enviadas a nenhum servidor.
+      </p>
+
+      <div class="setup-field">
+        <label>Trello API Key</label>
+        <input type="text" id="setup_trello_key" placeholder="Cole sua API Key aqui"/>
+        <p class="field-hint">
+          Acesse <a href="https://trello.com/power-ups/admin" target="_blank">trello.com/power-ups/admin</a>,
+          crie ou selecione um Power-Up e copie a <strong>API Key</strong>.
+        </p>
+      </div>
+
+      <div class="setup-field">
+        <label>Trello Token</label>
+        <input type="text" id="setup_trello_token" placeholder="Cole seu Token aqui"/>
+        <p class="field-hint">
+          Na mesma página, clique em <strong>"Generate Token"</strong> ao lado da API Key e autorize o acesso.
+        </p>
+      </div>
+
+      <div class="setup-field">
+        <label>Toggl API Token</label>
+        <input type="text" id="setup_toggl_token" placeholder="Cole seu Token do Toggl aqui"/>
+        <p class="field-hint">
+          Acesse <a href="https://track.toggl.com/profile" target="_blank">track.toggl.com/profile</a>,
+          role até o final da página e copie o <strong>API Token</strong>.
+        </p>
+      </div>
+
+      <div class="setup-field">
+        <label>Google Sheets ID <span style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="text" id="setup_sheets_id" class="optional" placeholder="ID da planilha (parte da URL)"/>
+        <p class="field-hint">
+          Na URL da sua planilha: <code style="font-size:11px">docs.google.com/spreadsheets/d/<strong>ID_AQUI</strong>/edit</code>
+        </p>
+      </div>
+
+      <div class="setup-test-result" id="setupTestResult"></div>
+
+      <div class="setup-actions">
+        <button class="btn btn-teal" onclick="setupTestarConexao()">🔌 Testar Conexão</button>
+        <button class="btn btn-primary" onclick="setupSalvar()">✅ Salvar e Abrir o Hub</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <header>
   <div class="logo">
@@ -473,6 +587,7 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
   </div>
   <div style="display:flex;gap:10px">
     <button class="btn btn-teal" onclick="testarConexoes()">🔌 Testar Conexões</button>
+    <button class="btn btn-primary" onclick="abrirSetup()">✏️ Alterar credenciais</button>
   </div>
   <div id="testeResultado" style="margin-top:16px"></div>
 </div>
@@ -529,18 +644,90 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
 <script>
 /* ═══ CONFIG ═══ */
 const DEFAULT_CONFIG = {
-  trello_key:   '65881be17871af9068318f75aaf44e0c',
-  trello_token: 'ATTAbc197e706415d714e62c08b2905add3db0dc3a3abdcc2f4e63c29b64c4c6c50f2D556F3D',
-  toggl_token:  '8af0dd9b49de04a5f58db380677c1f11',
-  sheets_id:    '1nWXSq5a4vSL-ZUuxSx9U8x6K4wbM9mHUsU0mvknvrus'
+  trello_key:   '',
+  trello_token: '',
+  toggl_token:  '',
+  sheets_id:    ''
 };
 
 function getCfg() {
-  return DEFAULT_CONFIG; // credenciais fixas — Daniel Rocha
+  const saved = localStorage.getItem('hub_config');
+  if (saved) {
+    try { return { ...DEFAULT_CONFIG, ...JSON.parse(saved) }; } catch(e) {}
+  }
+  return DEFAULT_CONFIG;
 }
 
 function salvarConfig() {
-  showToast('ℹ️ Credenciais fixas do Studio Rocha — não é necessário salvar.', '');
+  showToast('ℹ️ Use o botão "Alterar credenciais" para editar.', '');
+}
+
+/* ══ SETUP ══ */
+function abrirSetup() {
+  const cfg = getCfg();
+  document.getElementById('setup_trello_key').value   = cfg.trello_key   || '';
+  document.getElementById('setup_trello_token').value = cfg.trello_token || '';
+  document.getElementById('setup_toggl_token').value  = cfg.toggl_token  || '';
+  document.getElementById('setup_sheets_id').value    = cfg.sheets_id    || '';
+  document.getElementById('setupTestResult').style.display = 'none';
+  document.getElementById('setupScreen').style.display = 'block';
+}
+
+function fecharSetup() {
+  document.getElementById('setupScreen').style.display = 'none';
+}
+
+async function setupTestarConexao() {
+  const key   = document.getElementById('setup_trello_key').value.trim();
+  const token = document.getElementById('setup_trello_token').value.trim();
+  const res   = document.getElementById('setupTestResult');
+  res.style.display = 'none';
+  if (!key || !token) {
+    res.className = 'setup-test-result err';
+    res.textContent = '⚠️ Preencha a API Key e o Token do Trello antes de testar.';
+    res.style.display = 'block';
+    return;
+  }
+  res.className = 'setup-test-result';
+  res.textContent = 'Testando...';
+  res.style.display = 'block';
+  try {
+    const r = await fetch(`https://api.trello.com/1/members/me?key=${key}&token=${token}`);
+    if (r.ok) {
+      const data = await r.json();
+      res.className = 'setup-test-result ok';
+      res.textContent = `✅ Conexão OK — Olá, ${data.fullName || data.username}!`;
+    } else {
+      res.className = 'setup-test-result err';
+      res.textContent = `❌ Falha (${r.status}) — verifique a API Key e o Token.`;
+    }
+  } catch(e) {
+    res.className = 'setup-test-result err';
+    res.textContent = '❌ Erro de rede — verifique sua conexão.';
+  }
+}
+
+function setupSalvar() {
+  const key   = document.getElementById('setup_trello_key').value.trim();
+  const token = document.getElementById('setup_trello_token').value.trim();
+  const toggl = document.getElementById('setup_toggl_token').value.trim();
+  const sheet = document.getElementById('setup_sheets_id').value.trim();
+  if (!key || !token) {
+    const res = document.getElementById('setupTestResult');
+    res.className = 'setup-test-result err';
+    res.textContent = '⚠️ API Key e Token do Trello são obrigatórios.';
+    res.style.display = 'block';
+    return;
+  }
+  localStorage.setItem('hub_config', JSON.stringify({
+    trello_key: key, trello_token: token, toggl_token: toggl, sheets_id: sheet
+  }));
+  fecharSetup();
+  loadConfigFields();
+  loadProjetos();
+  loadFinanceiro();
+  loadBoardsSelect();
+  showToast('✅ Credenciais salvas! Hub carregado.', 'success');
 }
 
 function loadConfigFields() {
@@ -1966,13 +2153,27 @@ function aplicarMigracao() {
 
 /* ═══ INIT ═══ */
 document.addEventListener('DOMContentLoaded', () => {
-  localStorage.removeItem('hub_config'); // sempre usa DEFAULT_CONFIG do Daniel Rocha
   aplicarMigracao();
   verificarAmbiente();
   document.getElementById('fin_data').value = new Date().toISOString().split('T')[0];
-  loadProjetos();
-  loadFinanceiro();
-  loadBoardsSelect();
+
+  const saved = localStorage.getItem('hub_config');
+  let credenciaisOk = false;
+  if (saved) {
+    try {
+      const c = JSON.parse(saved);
+      credenciaisOk = !!(c.trello_key && c.trello_token);
+    } catch(e) {}
+  }
+
+  if (!credenciaisOk) {
+    abrirSetup();
+  } else {
+    loadConfigFields();
+    loadProjetos();
+    loadFinanceiro();
+    loadBoardsSelect();
+  }
 });
 </script>
 </body>
