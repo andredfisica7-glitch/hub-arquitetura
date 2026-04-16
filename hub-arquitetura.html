@@ -801,14 +801,82 @@ async function trelloDelete(path) {
   return res.json();
 }
 
-/* ═══ PAYMENT STATUS (localStorage) ═══ */
+/* ═══ PAYMENT STATUS (Trello labels + localStorage cache) ═══ */
 function getPayStatus(cardId) {
   return (JSON.parse(localStorage.getItem('hub_pay') || '{}'))[cardId] || null;
 }
-function setPayStatus(cardId, status) {
+
+async function setPayStatus(cardId, status) {
+  // Atualiza cache local
   const d = JSON.parse(localStorage.getItem('hub_pay') || '{}');
   if (status === null) delete d[cardId]; else d[cardId] = status;
   localStorage.setItem('hub_pay', JSON.stringify(d));
+
+  // Sincroniza com Trello se as labels estiverem disponíveis
+  if (!_payLabelIdPago || !_payLabelIdPendente) return;
+  const card = _cardsMap[cardId];
+  if (!card) return;
+  const currentIds = (card.labels || []).map(l => l.id);
+  try {
+    if (status === 'pago') {
+      if (!currentIds.includes(_payLabelIdPago))
+        await trelloPost(`/cards/${cardId}/idLabels`, { value: _payLabelIdPago });
+      if (currentIds.includes(_payLabelIdPendente))
+        await trelloDelete(`/cards/${cardId}/idLabels/${_payLabelIdPendente}`);
+      const pagoLabel = _boardLabels.find(l => l.id === _payLabelIdPago);
+      card.labels = (card.labels || []).filter(l => l.id !== _payLabelIdPendente);
+      if (pagoLabel && !card.labels.find(l => l.id === _payLabelIdPago)) card.labels.push(pagoLabel);
+    } else if (status === 'pendente') {
+      if (!currentIds.includes(_payLabelIdPendente))
+        await trelloPost(`/cards/${cardId}/idLabels`, { value: _payLabelIdPendente });
+      if (currentIds.includes(_payLabelIdPago))
+        await trelloDelete(`/cards/${cardId}/idLabels/${_payLabelIdPago}`);
+      const pendenteLabel = _boardLabels.find(l => l.id === _payLabelIdPendente);
+      card.labels = (card.labels || []).filter(l => l.id !== _payLabelIdPago);
+      if (pendenteLabel && !card.labels.find(l => l.id === _payLabelIdPendente)) card.labels.push(pendenteLabel);
+    } else {
+      if (currentIds.includes(_payLabelIdPago))
+        await trelloDelete(`/cards/${cardId}/idLabels/${_payLabelIdPago}`);
+      if (currentIds.includes(_payLabelIdPendente))
+        await trelloDelete(`/cards/${cardId}/idLabels/${_payLabelIdPendente}`);
+      card.labels = (card.labels || []).filter(l => l.id !== _payLabelIdPago && l.id !== _payLabelIdPendente);
+    }
+  } catch(e) {
+    console.warn('Erro ao sincronizar label de pagamento no Trello:', e);
+  }
+}
+
+async function ensurePayLabels(boardId) {
+  try {
+    const labels = await trelloGet(`/boards/${boardId}/labels?fields=name,color,id`);
+    let pagoLabel     = labels.find(l => l.name === 'Pago'               && l.color === 'green');
+    let pendenteLabel = labels.find(l => l.name === 'Pagamento Pendente' && l.color === 'yellow');
+    if (!pagoLabel)
+      pagoLabel = await trelloPost(`/boards/${boardId}/labels`, { name: 'Pago', color: 'green' });
+    if (!pendenteLabel)
+      pendenteLabel = await trelloPost(`/boards/${boardId}/labels`, { name: 'Pagamento Pendente', color: 'yellow' });
+    _payLabelIdPago     = pagoLabel.id;
+    _payLabelIdPendente = pendenteLabel.id;
+    // Garante que as labels ficam no array _boardLabels para o filtro visual
+    if (!_boardLabels.find(l => l.id === _payLabelIdPago))     _boardLabels.push(pagoLabel);
+    if (!_boardLabels.find(l => l.id === _payLabelIdPendente)) _boardLabels.push(pendenteLabel);
+  } catch(e) {
+    console.warn('ensurePayLabels falhou:', e);
+  }
+}
+
+function syncPayFromLabels(cards) {
+  const pay = JSON.parse(localStorage.getItem('hub_pay') || '{}');
+  cards.forEach(card => {
+    const labelIds = (card.labels || []).map(l => l.id);
+    if (_payLabelIdPago && labelIds.includes(_payLabelIdPago)) {
+      pay[card.id] = 'pago';
+    } else if (_payLabelIdPendente && labelIds.includes(_payLabelIdPendente)) {
+      pay[card.id] = 'pendente';
+    }
+    // Se nenhuma label de pagamento, mantém o que já existe no localStorage
+  });
+  localStorage.setItem('hub_pay', JSON.stringify(pay));
 }
 
 async function toggleTaskDone(cardId, makeDone) {
@@ -826,11 +894,15 @@ async function toggleTaskDone(cardId, makeDone) {
   }
 }
 
-function togglePayDone(cardId, markPaid) {
-  setPayStatus(cardId, markPaid ? 'pago' : 'pendente');
-  refreshCardInKanban(cardId);
-  openCard(cardId);
-  showToast(markPaid ? '💰 Pagamento recebido!' : '💸 Marcado como pendente.', markPaid ? 'success' : '');
+async function togglePayDone(cardId, markPaid) {
+  try {
+    await setPayStatus(cardId, markPaid ? 'pago' : 'pendente');
+    refreshCardInKanban(cardId);
+    openCard(cardId);
+    showToast(markPaid ? '💰 Pagamento recebido!' : '💸 Marcado como pendente.', markPaid ? 'success' : '');
+  } catch(e) {
+    showToast('⚠️ Erro ao salvar pagamento: ' + e.message, 'error');
+  }
 }
 
 function refreshCardInKanban(cardId) {
@@ -1614,6 +1686,8 @@ let _currentBoardLists = [];
 let _currentBoardMembers = [];
 let _boardLabels = [];
 let _currentBoardId = '';
+let _payLabelIdPago = '';
+let _payLabelIdPendente = '';
 let _dragCardId = null;
 let _activeSearch = '', _activeFilterLabel = '', _activeFilterMember = '';
 let _byList = {};
@@ -1627,6 +1701,7 @@ async function openBoard(boardId, boardName, boardUrl) {
   document.getElementById('boardOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   _cardsMap = {}; _currentBoardLists = []; _currentBoardMembers = []; _boardLabels = [];
+  _payLabelIdPago = ''; _payLabelIdPendente = '';
   _activeSearch = ''; _activeFilterLabel = ''; _activeFilterMember = '';
   try {
     const [lists, cards, members, labels] = await Promise.all([
@@ -1638,6 +1713,8 @@ async function openBoard(boardId, boardName, boardUrl) {
     _currentBoardLists = lists;
     _currentBoardMembers = members;
     _boardLabels = labels.filter(l => l.color);
+    await ensurePayLabels(boardId);
+    syncPayFromLabels(cards);
     renderBoard(lists, cards);
   } catch(e) {
     document.getElementById('boardBody').innerHTML = `<div class="board-loading">⚠️ Erro ao carregar: ${e.message}</div>`;
