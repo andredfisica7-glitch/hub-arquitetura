@@ -333,6 +333,34 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
   main { padding: 16px; } header, nav { padding-left: 16px; padding-right: 16px; }
 }
 
+/* ══ AUTO-SYNC ══ */
+#syncProgressBar {
+  position: fixed; top: 0; left: 0; height: 2px; width: 0;
+  background: var(--accent2); z-index: 10000;
+  transition: width .4s ease, opacity .3s ease;
+  opacity: 0;
+}
+#syncProgressBar.running {
+  opacity: 1; animation: syncProgress 2.5s ease-in-out infinite;
+}
+@keyframes syncProgress {
+  0%   { width: 0%; opacity: 1; }
+  60%  { width: 85%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+#syncStatus {
+  font-size: 11px; color: var(--muted);
+  display: flex; align-items: center; gap: 5px;
+}
+#syncStatus .sync-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0; transition: background .3s;
+}
+#syncStatus .sync-dot.syncing {
+  background: var(--accent2);
+  animation: pulse 1s infinite;
+}
+
 /* ══ SETUP SCREEN ══ */
 #setupScreen {
   display: none;
@@ -590,6 +618,19 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
     <button class="btn btn-primary" onclick="abrirSetup()">✏️ Alterar credenciais</button>
   </div>
   <div id="testeResultado" style="margin-top:16px"></div>
+
+  <div class="config-section" style="margin-top:20px;border-color:rgba(0,212,170,.25)">
+    <h3 style="color:var(--accent2);margin-bottom:8px">🔄 Atualização Automática</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Intervalo de sincronização automática dos dados do Trello.</p>
+    <div class="field-group" style="max-width:220px">
+      <label>Intervalo</label>
+      <select id="cfg_sync_interval" onchange="setSyncInterval(this.value)">
+        <option value="3">A cada 3 minutos</option>
+        <option value="5" selected>A cada 5 minutos (padrão)</option>
+        <option value="10">A cada 10 minutos</option>
+      </select>
+    </div>
+  </div>
 </div>
 
 <div class="config-section" id="secaoLocalhost" style="border-color:rgba(255,209,102,.3)">
@@ -638,7 +679,11 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
   <div class="card-panel-body" id="cardPanelBody"></div>
 </div>
 
-<footer>Studio Rocha · Hub de Gestão · Trello + Toggl + Google Sheets</footer>
+<div id="syncProgressBar"></div>
+<footer style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <span>Studio Rocha · Hub de Gestão · Trello + Toggl + Google Sheets</span>
+  <span id="syncStatus"><span class="sync-dot"></span><span id="syncStatusText">—</span></span>
+</footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1648,17 +1693,76 @@ function exportarCSV() {
 }
 
 /* ═══ SYNC ALL ═══ */
+let _syncTimer = null;
+let _syncIntervalMin = 5;
+
 async function syncAll() {
   const btn = document.getElementById('syncBtn');
-  btn.disabled = true; btn.textContent = '⟳ Sincronizando...';
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Sincronizando...'; }
+  setSyncIndicator(true);
   try {
     await loadProjetos();
-    showToast('✅ Dados sincronizados!', 'success');
+    updateSyncTimestamp();
   } catch(e) {
     showToast('⚠️ Erro na sincronização: ' + e.message, 'error');
   }
-  btn.disabled = false; btn.textContent = '⟳ Sincronizar Dados';
+  if (btn) { btn.disabled = false; btn.textContent = '⟳ Sincronizar Dados'; }
+  setSyncIndicator(false);
 }
+
+function setSyncIndicator(on) {
+  const bar  = document.getElementById('syncProgressBar');
+  const dot  = document.querySelector('#syncStatus .sync-dot');
+  if (bar) bar.className = on ? 'running' : '';
+  if (dot) dot.className = 'sync-dot' + (on ? ' syncing' : '');
+}
+
+function updateSyncTimestamp() {
+  const el = document.getElementById('syncStatusText');
+  if (!el) return;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  el.textContent = `Última atualização: ${hh}:${mm}`;
+}
+
+function getSyncIntervalMs() {
+  return _syncIntervalMin * 60 * 1000;
+}
+
+function startAutoSync() {
+  stopAutoSync();
+  _syncTimer = setInterval(() => {
+    if (!document.hidden) syncAll();
+  }, getSyncIntervalMs());
+}
+
+function stopAutoSync() {
+  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
+}
+
+function setSyncInterval(minutes) {
+  _syncIntervalMin = parseInt(minutes, 10);
+  localStorage.setItem('hub_sync_interval', String(_syncIntervalMin));
+  startAutoSync();
+  showToast(`🔄 Intervalo definido para ${minutes} minutos.`, 'success');
+}
+
+function loadSyncInterval() {
+  const saved = localStorage.getItem('hub_sync_interval');
+  if (saved) _syncIntervalMin = parseInt(saved, 10);
+  const sel = document.getElementById('cfg_sync_interval');
+  if (sel) sel.value = String(_syncIntervalMin);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    stopAutoSync();
+  } else {
+    startAutoSync();
+    syncAll(); // Sincroniza imediatamente ao voltar para a aba
+  }
+});
 
 /* ═══ TESTAR CONEXÕES ═══ */
 async function testarConexoes() {
@@ -2246,8 +2350,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!credenciaisOk) {
     abrirSetup();
   } else {
+    loadSyncInterval();
     loadConfigFields();
-    loadProjetos();
+    loadProjetos().then(() => {
+      updateSyncTimestamp();
+      startAutoSync();
+    });
     loadFinanceiro();
     loadBoardsSelect();
   }
