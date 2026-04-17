@@ -1676,11 +1676,11 @@ function loadFinanceiro() {
   tbody.innerHTML = dados.map(d => `
     <tr>
       <td>${formatDate(d.data)}</td>
-      <td><span class="badge badge-purple">${d.projeto}</span></td>
-      <td>${d.desc}${d.obs ? `<br><small style="color:var(--muted)">${d.obs}</small>` : ''}</td>
-      <td><span class="badge badge-yellow">${tipoLabel[d.tipo]||d.tipo}</span></td>
+      <td><span class="badge badge-purple">${esc(d.projeto)}</span></td>
+      <td>${esc(d.desc)}${d.obs ? `<br><small style="color:var(--muted)">${esc(d.obs)}</small>` : ''}</td>
+      <td><span class="badge badge-yellow">${esc(tipoLabel[d.tipo]||d.tipo)}</span></td>
       <td style="font-weight:700;color:var(--accent2)">R$ ${d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-      <td><span class="badge ${statusClass[d.status]||'badge-yellow'}">${d.status}</span></td>
+      <td><span class="badge ${statusClass[d.status]||'badge-yellow'}">${esc(d.status)}</span></td>
       <td><button onclick="deletarLancamento(${d.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">🗑️</button></td>
     </tr>`).join('');
 
@@ -1701,7 +1701,7 @@ function loadFinanceiro() {
     <div class="fin-row"><span class="label">Total pendente</span><span class="value" style="color:var(--red)">R$ ${totalPend.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
     <hr style="border:none;border-top:1px solid var(--border);margin:12px 0"/>
     ${Object.entries(porProjeto).map(([p,v]) => `
-      <div class="fin-row"><span class="label">${p}</span><span class="value">R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
+      <div class="fin-row"><span class="label">${esc(p)}</span><span class="value">R$ ${v.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span></div>
     `).join('')}`;
 }
 
@@ -2411,6 +2411,9 @@ document.addEventListener('keydown', e => {
 });
 
 /* ═══ UTILS ═══ */
+function esc(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 function formatHoras(secs) {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
