@@ -468,6 +468,23 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
         </p>
       </div>
 
+      <div class="setup-field">
+        <label>Google Client ID <span style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0">(opcional — para envio direto ao Sheets)</span></label>
+        <input type="text" id="setup_google_client_id" class="optional" placeholder="xxxx.apps.googleusercontent.com"/>
+        <p class="field-hint">
+          Acesse <a href="https://console.cloud.google.com/apis/credentials" target="_blank">console.cloud.google.com → Credentials</a>,
+          crie um <strong>OAuth 2.0 Client ID</strong> do tipo <strong>Web Application</strong> e adicione a URL desta página como Authorized Redirect URI.
+        </p>
+      </div>
+
+      <div class="setup-field">
+        <label>Google Client Secret <span style="font-size:11px;color:var(--muted);text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <input type="password" id="setup_google_client_secret" class="optional" placeholder="Cole o Client Secret aqui"/>
+        <p class="field-hint">
+          Na mesma tela do Client ID, copie o <strong>Client Secret</strong> gerado.
+        </p>
+      </div>
+
       <div class="setup-test-result" id="setupTestResult"></div>
 
       <div class="setup-actions">
@@ -571,9 +588,9 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
         </select>
       </div>
       <div class="field-group"><label>Observação (opcional)</label><textarea id="fin_obs" rows="2" placeholder="Comprovante recebido por WhatsApp, etc."></textarea></div>
-      <div style="display:flex;gap:10px;margin-top:6px">
+      <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
         <button class="btn btn-primary" onclick="salvarPagamento()">💾 Salvar</button>
-        <button class="btn btn-teal" onclick="exportarCSV()">📥 Exportar CSV para Sheets</button>
+        <div id="sheetsActions" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
     </div>
 
@@ -689,10 +706,12 @@ footer { text-align: center; padding: 20px; font-size: 12px; color: var(--muted)
 <script>
 /* ═══ CONFIG ═══ */
 const DEFAULT_CONFIG = {
-  trello_key:   '',
-  trello_token: '',
-  toggl_token:  '',
-  sheets_id:    ''
+  trello_key:            '',
+  trello_token:          '',
+  toggl_token:           '',
+  sheets_id:             '',
+  google_client_id:      '',
+  google_client_secret:  ''
 };
 
 function getCfg() {
@@ -710,10 +729,12 @@ function salvarConfig() {
 /* ══ SETUP ══ */
 function abrirSetup() {
   const cfg = getCfg();
-  document.getElementById('setup_trello_key').value   = cfg.trello_key   || '';
-  document.getElementById('setup_trello_token').value = cfg.trello_token || '';
-  document.getElementById('setup_toggl_token').value  = cfg.toggl_token  || '';
-  document.getElementById('setup_sheets_id').value    = cfg.sheets_id    || '';
+  document.getElementById('setup_trello_key').value            = cfg.trello_key           || '';
+  document.getElementById('setup_trello_token').value          = cfg.trello_token         || '';
+  document.getElementById('setup_toggl_token').value           = cfg.toggl_token          || '';
+  document.getElementById('setup_sheets_id').value             = cfg.sheets_id            || '';
+  document.getElementById('setup_google_client_id').value      = cfg.google_client_id     || '';
+  document.getElementById('setup_google_client_secret').value  = cfg.google_client_secret || '';
   document.getElementById('setupTestResult').style.display = 'none';
   document.getElementById('setupScreen').style.display = 'block';
 }
@@ -753,10 +774,12 @@ async function setupTestarConexao() {
 }
 
 function setupSalvar() {
-  const key   = document.getElementById('setup_trello_key').value.trim();
-  const token = document.getElementById('setup_trello_token').value.trim();
-  const toggl = document.getElementById('setup_toggl_token').value.trim();
-  const sheet = document.getElementById('setup_sheets_id').value.trim();
+  const key           = document.getElementById('setup_trello_key').value.trim();
+  const token         = document.getElementById('setup_trello_token').value.trim();
+  const toggl         = document.getElementById('setup_toggl_token').value.trim();
+  const sheet         = document.getElementById('setup_sheets_id').value.trim();
+  const gClientId     = document.getElementById('setup_google_client_id').value.trim();
+  const gClientSecret = document.getElementById('setup_google_client_secret').value.trim();
   if (!key || !token) {
     const res = document.getElementById('setupTestResult');
     res.className = 'setup-test-result err';
@@ -765,10 +788,12 @@ function setupSalvar() {
     return;
   }
   localStorage.setItem('hub_config', JSON.stringify({
-    trello_key: key, trello_token: token, toggl_token: toggl, sheets_id: sheet
+    trello_key: key, trello_token: token, toggl_token: toggl, sheets_id: sheet,
+    google_client_id: gClientId, google_client_secret: gClientSecret
   }));
   fecharSetup();
   loadConfigFields();
+  renderSheetsButtons();
   loadProjetos();
   loadFinanceiro();
   loadBoardsSelect();
@@ -1680,16 +1705,142 @@ function loadFinanceiro() {
     `).join('')}`;
 }
 
-function exportarCSV() {
+/* ═══ GOOGLE SHEETS ═══ */
+function getGToken() { return localStorage.getItem('hub_gtoken') || ''; }
+function setGToken(t) { localStorage.setItem('hub_gtoken', t); }
+function clearGToken() { localStorage.removeItem('hub_gtoken'); }
+
+function renderSheetsButtons() {
+  const el = document.getElementById('sheetsActions');
+  if (!el) return;
+  const hasToken = !!getGToken();
+  const cfg = getCfg();
+  if (!cfg.google_client_id) {
+    el.innerHTML = `<button class="btn btn-teal" style="opacity:.6;cursor:default" title="Configure o Google Client ID nas Configurações">📊 Sheets (sem config)</button>`;
+    return;
+  }
+  if (!hasToken) {
+    el.innerHTML = `<button class="btn btn-teal" onclick="googleConnect()">🔗 Conectar Google Sheets</button>`;
+  } else {
+    el.innerHTML = `
+      <button class="btn btn-teal" onclick="enviarParaSheets()">📤 Enviar para Sheets</button>
+      <button class="btn btn-primary" onclick="sincronizacaoCompleta()">🔄 Sincronização Completa</button>
+      <button class="btn" onclick="googleDesconectar()" style="background:rgba(255,92,124,.12);color:var(--red);border:1px solid rgba(255,92,124,.3);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">✕ Desconectar</button>`;
+  }
+}
+
+function googleConnect() {
+  const cfg = getCfg();
+  if (!cfg.google_client_id) {
+    showToast('⚠️ Configure o Google Client ID nas Configurações.', 'error');
+    return;
+  }
+  const redirectUri = location.href.split('?')[0].split('#')[0];
+  const scope = 'https://www.googleapis.com/auth/spreadsheets';
+  const authUrl = `https://accounts.google.com/o/oauth2/auth?response_type=token`
+    + `&client_id=${encodeURIComponent(cfg.google_client_id)}`
+    + `&redirect_uri=${encodeURIComponent(redirectUri)}`
+    + `&scope=${encodeURIComponent(scope)}`
+    + `&prompt=consent`;
+
+  const popup = window.open(authUrl, 'google_oauth', 'width=520,height=640,left=200,top=80');
+  if (!popup) { showToast('⚠️ Popup bloqueado. Permita popups para este site.', 'error'); return; }
+
+  const timer = setInterval(() => {
+    try {
+      if (!popup || popup.closed) { clearInterval(timer); return; }
+      const hash = popup.location.hash;
+      if (hash && hash.includes('access_token')) {
+        const params = new URLSearchParams(hash.substring(1));
+        const token = params.get('access_token');
+        if (token) {
+          clearInterval(timer);
+          popup.close();
+          setGToken(token);
+          renderSheetsButtons();
+          showToast('✅ Google Sheets conectado!', 'success');
+        }
+      }
+    } catch(e) { /* ainda no domínio do Google — aguardando redirect */ }
+  }, 500);
+}
+
+function googleDesconectar() {
+  clearGToken();
+  renderSheetsButtons();
+  showToast('🔌 Google Sheets desconectado.', '');
+}
+
+function finRowsParaValues() {
+  const tipoLabel = { custo_obra:'Custo Obra', honorario:'Honorário', material:'Material', servico:'Serviço', outros:'Outros' };
+  const header = [['Data','Projeto','Descrição','Tipo','Valor (R$)','Status','Observação']];
+  const rows = getFinData().map(d => [
+    d.data, d.projeto, d.desc,
+    tipoLabel[d.tipo] || d.tipo,
+    d.valor, d.status, d.obs || ''
+  ]);
+  return header.concat(rows);
+}
+
+async function sheetsRequest(method, path, body) {
+  const token = getGToken();
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets${path}`, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (res.status === 401) throw new Error('TOKEN_EXPIRED');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Sheets API: ' + res.status);
+  }
+  return res.json();
+}
+
+async function enviarParaSheets() {
+  const cfg = getCfg();
+  if (!cfg.sheets_id) { showToast('⚠️ Configure o Google Sheets ID nas Configurações.', 'error'); return; }
   const dados = getFinData();
-  if (!dados.length) { showToast('⚠️ Nenhum dado para exportar.', 'error'); return; }
-  const header = ['Data','Projeto','Descrição','Tipo','Valor','Status','Observação'];
-  const rows = dados.map(d => [d.data, d.projeto, d.desc, d.tipo, d.valor, d.status, d.obs || ''].map(v => `"${String(v).replace(/"/g,'""')}"`).join(','));
-  const csv = [header.join(','), ...rows].join('\n');
-  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = 'financeiro-hub-arquitetura.csv'; a.click();
-  showToast('📥 CSV exportado! Importe no Google Sheets.', 'success');
+  if (!dados.length) { showToast('⚠️ Nenhum lançamento para enviar.', 'error'); return; }
+  showToast('📤 Enviando para o Sheets...', '');
+  try {
+    await sheetsRequest('POST', `/${cfg.sheets_id}/values/Financeiro!A1:G:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`, {
+      values: finRowsParaValues().slice(1) // sem cabeçalho no append
+    });
+    showToast(`✅ ${dados.length} registros enviados para o Sheets!`, 'success');
+  } catch(e) {
+    handleSheetsError(e);
+  }
+}
+
+async function sincronizacaoCompleta() {
+  const cfg = getCfg();
+  if (!cfg.sheets_id) { showToast('⚠️ Configure o Google Sheets ID nas Configurações.', 'error'); return; }
+  const dados = getFinData();
+  if (!dados.length) { showToast('⚠️ Nenhum lançamento para sincronizar.', 'error'); return; }
+  if (!confirm(`Isso vai limpar a aba "Financeiro" da planilha e reescrever todos os ${dados.length} registros. Continuar?`)) return;
+  showToast('🔄 Sincronizando...', '');
+  try {
+    // 1. Limpa o intervalo
+    await sheetsRequest('POST', `/${cfg.sheets_id}/values/Financeiro!A:G:clear`, {});
+    // 2. Reescreve tudo com cabeçalho
+    await sheetsRequest('PUT', `/${cfg.sheets_id}/values/Financeiro!A1:G?valueInputOption=USER_ENTERED`, {
+      values: finRowsParaValues()
+    });
+    showToast(`✅ Sincronização completa — ${dados.length} registros gravados!`, 'success');
+  } catch(e) {
+    handleSheetsError(e);
+  }
+}
+
+function handleSheetsError(e) {
+  if (e.message === 'TOKEN_EXPIRED') {
+    clearGToken();
+    renderSheetsButtons();
+    showToast('🔒 Sessão expirada. Reconecte o Google Sheets.', 'error');
+  } else {
+    showToast('⚠️ Erro Sheets: ' + e.message, 'error');
+  }
 }
 
 /* ═══ SYNC ALL ═══ */
@@ -2352,6 +2503,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } else {
     loadSyncInterval();
     loadConfigFields();
+    renderSheetsButtons();
     loadProjetos().then(() => {
       updateSyncTimestamp();
       startAutoSync();
