@@ -301,6 +301,10 @@
       color:var(--text30); margin-bottom:14px; display:block;
     }
   </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -346,6 +350,7 @@
   <div class="page" id="pg-alunos">
     <div class="page-header">
       <div class="header-title" id="titulo-alunos">Meus Alunos</div>
+      <span id="fb-status" style="font-size:10px;color:rgba(255,255,255,0.3);align-self:center;">● aguardando</span>
       <button id="btn-instalar" class="header-btn" onclick="instalarApp()" style="display:none" title="Instalar app">⬇️</button>
       <button class="header-btn" onclick="navigate('pg-exportar'); renderExportar();" title="Exportar">📤</button>
     </div>
@@ -796,6 +801,7 @@
 
       state.evolucoes.push(evol);
       saveState();
+      enviarParaFirebase(evol);
 
       showToast('✅ Evolução salva!');
 
@@ -962,6 +968,64 @@
         navigator.serviceWorker.register('sw-evolucoes.js')
           .catch(function() {}); // silencia erros se não estiver em HTTPS
       });
+    }
+
+
+    // ── FIREBASE ──
+
+    var _fbApp = null;
+    var _fbDb  = null;
+    var _fbOnline = false;
+
+    (function initFirebase() {
+      var cfg = {
+        apiKey:            'AIzaSyAdJ-WnynzuPQNd3NHT7en_BSmsm6SpcLE',
+        authDomain:        'app-evolucoes-de-aluno.firebaseapp.com',
+        projectId:         'app-evolucoes-de-aluno',
+        storageBucket:     'app-evolucoes-de-aluno.firebasestorage.app',
+        messagingSenderId: '405320356686',
+        appId:             '1:405320356686:web:902dc9712da7e65d5c841f',
+      };
+      try {
+        _fbApp = firebase.initializeApp(cfg);
+        _fbDb  = firebase.firestore();
+
+        // Habilita persistência offline — fila automática ao reconectar
+        _fbDb.enablePersistence({ synchronizeTabs: false })
+          .catch(function() {}); // ignora erro se já habilitado
+
+        // Monitora status de conexão
+        _fbDb.collection('_heartbeat').doc('status')
+          .onSnapshot(function() {
+            _fbOnline = true;
+            _atualizarIndicadorFb('online');
+          }, function() {
+            _fbOnline = false;
+            _atualizarIndicadorFb('offline');
+          });
+
+      } catch(e) {
+        console.warn('Firebase init error:', e.message);
+      }
+    })();
+
+    function _atualizarIndicadorFb(status) {
+      var el = document.getElementById('fb-status');
+      if (!el) return;
+      if (status === 'online') {
+        el.textContent = '● sincronizado';
+        el.style.color = '#4CAF7D';
+      } else {
+        el.textContent = '● sem conexão';
+        el.style.color = 'rgba(255,255,255,0.3)';
+      }
+    }
+
+    function enviarParaFirebase(evol) {
+      if (!_fbDb) return;
+      var doc = Object.assign({}, evol, { _enviadoEm: new Date().toISOString() });
+      _fbDb.collection('evolucoes').doc(evol.id).set(doc)
+        .catch(function(e) { console.warn('FB send error:', e.message); });
     }
 
     // ── INIT
