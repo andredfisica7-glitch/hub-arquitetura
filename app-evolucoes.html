@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>BYS Evoluções</title>
+  <meta name="theme-color" content="#0A0A0A">
+  <link rel="manifest" href="manifest-evolucoes.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BYS Evoluções">
+  <style>
+    :root {
+      --gold: #C9A84C;
+      --gold-dark: #9A7A2E;
+      --gold-pale: rgba(201,168,76,0.1);
+      --bg: #0A0A0A;
+      --surface: #141414;
+      --card: #1E1E1E;
+      --border: rgba(201,168,76,0.15);
+      --border-dim: rgba(255,255,255,0.06);
+      --text: #FFFFFF;
+      --text60: rgba(255,255,255,0.6);
+      --text30: rgba(255,255,255,0.3);
+      --green: #4CAF7D;
+      --green-pale: rgba(76,175,125,0.12);
+      --red: #FF6B6B;
+      --red-pale: rgba(255,107,107,0.12);
+      --yellow: #F59E0B;
+      --yellow-pale: rgba(245,158,11,0.12);
+      --header-h: 56px;
+      --search-h: 58px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+
+    /* ── PAGES ── */
+    .page {
+      position:fixed; inset:0;
+      display:none; flex-direction:column;
+      background:var(--bg);
+      overflow:hidden;
+    }
+
+    /* ── HEADER ── */
+    .page-header {
+      height:var(--header-h);
+      display:flex; align-items:center; gap:12px;
+      padding:0 16px;
+      background:rgba(10,10,10,0.97);
+      backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      flex-shrink:0;
+      z-index:10;
+    }
+    .back-btn {
+      width:36px; height:36px; border-radius:10px;
+      background:rgba(255,255,255,0.07); border:none;
+      color:var(--text); font-size:18px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .header-title {
+      font-size:17px; font-weight:700; flex:1;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .header-btn {
+      width:36px; height:36px; border-radius:10px;
+      background:rgba(255,255,255,0.07); border:none;
+      color:var(--text); font-size:16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .header-gold { font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); font-weight:700; flex:1; text-align:center; }
+
+    /* ── SEARCH BAR ── */
+    .page-search {
+      padding:10px 16px 8px;
+      border-bottom:1px solid var(--border-dim);
+      flex-shrink:0;
+      background:var(--bg);
+    }
+    .search-input { border-radius:12px !important; }
+
+    /* ── BODY ── */
+    .page-body {
+      flex:1; overflow-y:auto; padding:16px;
+      -webkit-overflow-scrolling:touch;
+    }
+    .page-body.center {
+      display:flex; align-items:center; justify-content:center;
+    }
+    .page-body.no-pad { padding:0; }
+
+    /* ── INPUTS ── */
+    .input {
+      width:100%; height:48px; padding:0 14px;
+      background:var(--card); border:1px solid var(--border-dim);
+      border-radius:12px; color:var(--text);
+      font-size:16px; font-family:inherit;
+      outline:none; transition:border-color 0.2s;
+      -webkit-appearance:none; appearance:none;
+    }
+    .input:focus { border-color:var(--gold); }
+    .input::placeholder { color:var(--text30); }
+    textarea.input { height:auto; padding:14px; resize:none; line-height:1.5; }
+    .input-label {
+      font-size:12px; letter-spacing:1px; text-transform:uppercase;
+      color:var(--text30); margin-bottom:6px; display:block;
+    }
+    .input-group { margin-bottom:16px; }
+    .input-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .input-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      width:100%; height:52px;
+      background:linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border:none; border-radius:14px;
+      color:#0A0A0A; font-size:16px; font-weight:800;
+      cursor:pointer; letter-spacing:0.5px;
+      transition:opacity 0.15s, transform 0.1s;
+    }
+    .btn-primary:active { opacity:0.85; transform:scale(0.98); }
+    .btn-secondary {
+      width:100%; height:48px;
+      background:transparent; border:1px solid var(--border);
+      border-radius:14px; color:var(--gold);
+      font-size:15px; font-weight:600; cursor:pointer;
+      transition:background 0.15s;
+    }
+    .btn-secondary:active { background:var(--gold-pale); }
+    .btn-danger {
+      background:transparent; border:1px solid rgba(255,107,107,0.3);
+      border-radius:10px; color:var(--red);
+      font-size:13px; font-weight:600; cursor:pointer;
+      padding:6px 14px;
+    }
+    .btn-icon {
+      background:rgba(255,255,255,0.05); border:1px solid var(--border-dim);
+      border-radius:8px; color:var(--text60); cursor:pointer;
+      padding:6px 10px; font-size:13px;
+    }
+    .btn-green {
+      width:100%; height:52px;
+      background:linear-gradient(135deg,#4CAF7D,#2d7a55);
+      border:none; border-radius:14px;
+      color:#fff; font-size:16px; font-weight:800;
+      cursor:pointer; transition:opacity 0.15s;
+    }
+    .btn-green:active { opacity:0.85; }
+
+    /* ── CARDS ── */
+    .card {
+      background:var(--card); border:1px solid var(--border-dim);
+      border-radius:16px; padding:16px;
+      transition:border-color 0.2s;
+    }
+    .card:active { border-color:var(--border); }
+    .card + .card { margin-top:10px; }
+
+    /* ── ALUNO CARD ── */
+    .aluno-card {
+      background:var(--card); border:1px solid var(--border-dim);
+      border-radius:16px; padding:16px 16px 14px;
+      display:flex; align-items:center; gap:14px;
+      cursor:pointer; transition:border-color 0.2s;
+      margin-bottom:10px;
+    }
+    .aluno-card:active { border-color:var(--gold); }
+    .aluno-avatar {
+      width:46px; height:46px; border-radius:50%;
+      background:var(--gold-pale); border:2px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px; font-weight:900; color:var(--gold);
+      flex-shrink:0; text-transform:uppercase;
+    }
+    .aluno-info { flex:1; min-width:0; }
+    .aluno-nome { font-size:16px; font-weight:700; margin-bottom:3px; }
+    .aluno-sub { font-size:12px; color:var(--text30); }
+    .aluno-badge {
+      font-size:10px; font-weight:700; padding:3px 8px;
+      border-radius:20px; letter-spacing:0.5px;
+    }
+    .badge-pendente { background:var(--yellow-pale); color:var(--yellow); border:1px solid rgba(245,158,11,0.3); }
+    .badge-ok { background:var(--green-pale); color:var(--green); border:1px solid rgba(76,175,125,0.3); }
+
+    /* ── EVOLUTION CARD ── */
+    .evol-card {
+      background:var(--card); border:1px solid var(--border-dim);
+      border-radius:14px; padding:14px 16px;
+      margin-bottom:10px;
+    }
+    .evol-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .evol-date { font-size:13px; font-weight:700; color:var(--gold); }
+    .evol-status-badge {
+      font-size:10px; padding:3px 8px; border-radius:20px; font-weight:600;
+    }
+    .evol-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:8px; }
+    .evol-stat { text-align:center; }
+    .evol-stat-val { font-size:18px; font-weight:900; color:var(--gold); display:block; }
+    .evol-stat-lbl { font-size:10px; color:var(--text30); text-transform:uppercase; letter-spacing:1px; }
+    .evol-obs { font-size:13px; color:var(--text60); line-height:1.5; margin-top:8px; padding-top:8px; border-top:1px solid var(--border-dim); }
+
+    /* ── CARGAS ── */
+    .carga-row {
+      display:grid; grid-template-columns:1fr 60px 50px 50px 32px;
+      gap:8px; align-items:center; margin-bottom:8px;
+    }
+    .carga-row input { font-size:14px !important; }
+
+    /* ── ACCORDION ── */
+    .accordion-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 0; cursor:pointer; border-bottom:1px solid var(--border-dim);
+    }
+    .accordion-header span { font-size:14px; font-weight:600; color:var(--gold); }
+    .accordion-arrow { font-size:12px; color:var(--text30); transition:transform 0.2s; }
+    .accordion-arrow.open { transform:rotate(180deg); }
+    .accordion-body { padding-top:14px; display:none; }
+    .accordion-body.open { display:block; }
+
+    /* ── FAB ── */
+    .fab {
+      position:fixed; bottom:24px; right:24px;
+      width:56px; height:56px; border-radius:50%;
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      color:#0A0A0A; font-size:28px; font-weight:300;
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer; box-shadow:0 4px 20px rgba(201,168,76,0.35);
+      border:none; z-index:20;
+      transition:transform 0.1s;
+    }
+    .fab:active { transform:scale(0.93); }
+
+    /* ── TOAST ── */
+    .toast {
+      position:fixed; bottom:32px; left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:#1E2A1A; border:1px solid rgba(76,175,125,0.35);
+      color:#fff; padding:12px 20px; border-radius:12px;
+      font-size:14px; font-weight:600; z-index:1000;
+      transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      white-space:nowrap; pointer-events:none;
+    }
+    .toast.show { transform:translateX(-50%) translateY(0); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      display:none; align-items:flex-end; z-index:500;
+    }
+    .modal-box {
+      background:var(--surface); border-radius:20px 20px 0 0;
+      padding:24px 20px 36px; width:100%;
+      border-top:1px solid var(--border);
+    }
+    .modal-title { font-size:17px; font-weight:800; margin-bottom:20px; }
+
+    /* ── CONFIG PAGE ── */
+    .config-content { text-align:center; padding:0 24px; width:100%; max-width:340px; }
+    .logo-circle {
+      width:80px; height:80px; border-radius:50%;
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      display:flex; align-items:center; justify-content:center;
+      font-size:20px; font-weight:900; color:#0A0A0A;
+      margin:0 auto 24px;
+    }
+    .config-content h2 { font-size:26px; font-weight:900; margin-bottom:8px; }
+    .config-content p { font-size:15px; color:var(--text60); margin-bottom:28px; }
+    .config-content .input { margin-bottom:16px; text-align:center; font-size:18px; font-weight:700; }
+
+    /* ── EXPORT PAGE ── */
+    .export-summary {
+      text-align:center; padding:28px 0 24px;
+      border-bottom:1px solid var(--border-dim); margin-bottom:20px;
+    }
+    .export-count { font-size:52px; font-weight:900; color:var(--gold); letter-spacing:-2px; display:block; line-height:1; }
+    .export-label { font-size:12px; color:var(--text30); text-transform:uppercase; letter-spacing:2px; margin-top:6px; display:block; }
+    .export-name { font-size:15px; color:var(--gold); font-weight:700; margin-top:12px; display:block; }
+
+    /* ── EMPTY STATE ── */
+    .empty { text-align:center; padding:60px 24px; color:var(--text30); }
+    .empty-icon { font-size:48px; display:block; margin-bottom:16px; }
+    .empty h3 { font-size:17px; font-weight:700; color:var(--text60); margin-bottom:8px; }
+    .empty p { font-size:14px; line-height:1.6; }
+
+    /* ── UTILS ── */
+    .mt8 { margin-top:8px; }
+    .mt12 { margin-top:12px; }
+    .mt16 { margin-top:16px; }
+    .mt20 { margin-top:20px; }
+    .text-dim { color:var(--text60); font-size:14px; }
+    .text-gold { color:var(--gold); }
+    .text-green { color:var(--green); }
+    .divider { height:1px; background:var(--border-dim); margin:16px 0; }
+    .row { display:flex; align-items:center; gap:10px; }
+    .row-between { display:flex; align-items:center; justify-content:space-between; }
+    .section-label {
+      font-size:10px; letter-spacing:3px; text-transform:uppercase;
+      color:var(--text30); margin-bottom:14px; display:block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BANNER INSTALAÇÃO iOS -->
+  <div id="ios-install-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:900;
+    background:#1A1A1A;border-top:1px solid rgba(201,168,76,0.2);padding:16px 20px;
+    display:none;align-items:center;gap:14px;">
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:3px;">Instalar no iPhone</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);">Toque em <strong style="color:#C9A84C;">Compartilhar ↑</strong> → <strong style="color:#C9A84C;">Adicionar à Tela de Início</strong></div>
+    </div>
+    <button onclick="document.getElementById('ios-install-banner').style.display='none'"
+      style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:20px;cursor:pointer;padding:4px;">×</button>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: CONFIG ═══ -->
+  <div class="page" id="pg-config">
+    <div class="page-header">
+      <div class="header-gold">Best You Studio</div>
+    </div>
+    <div class="page-body center">
+      <div class="config-content">
+        <div class="logo-circle">BYS</div>
+        <h2>Bem-vindo!</h2>
+        <p>Digite seu nome para começar a usar o app de evoluções.</p>
+        <input id="inp-personal" class="input" type="text" placeholder="Seu nome completo" autocomplete="off" />
+        <button class="btn-primary mt8" onclick="savePersonal()">Começar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: ALUNOS ═══ -->
+  <div class="page" id="pg-alunos">
+    <div class="page-header">
+      <div class="header-title" id="titulo-alunos">Meus Alunos</div>
+      <button id="btn-instalar" class="header-btn" onclick="instalarApp()" style="display:none" title="Instalar app">⬇️</button>
+      <button class="header-btn" onclick="navigate('pg-exportar'); renderExportar();" title="Exportar">📤</button>
+    </div>
+    <div class="page-search">
+      <input id="inp-busca" class="input search-input" type="search" placeholder="Buscar aluno..." oninput="filterAlunos()" />
+    </div>
+    <div class="page-body" id="lista-alunos">
+      <div class="empty">
+        <span class="empty-icon">👥</span>
+        <h3>Nenhum aluno ainda</h3>
+        <p>Toque em + para adicionar seu primeiro aluno.</p>
+      </div>
+    </div>
+    <button class="fab" onclick="openAddAluno()">+</button>
+  </div>
+
+  <!-- ═══ PAGE: FORM EVOLUÇÃO ═══ -->
+  <div class="page" id="pg-form">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="header-title" id="form-aluno-nome">Nova Evolução</div>
+    </div>
+    <div class="page-body" id="pg-form-body"></div>
+  </div>
+
+  <!-- ═══ PAGE: HISTÓRICO ═══ -->
+  <div class="page" id="pg-historico">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="header-title" id="hist-aluno-nome">Histórico</div>
+      <button class="header-btn" onclick="openForm(currentAlunoId)" title="Nova evolução">+</button>
+    </div>
+    <div class="page-body" id="lista-historico"></div>
+  </div>
+
+  <!-- ═══ PAGE: EXPORTAR ═══ -->
+  <div class="page" id="pg-exportar">
+    <div class="page-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <div class="header-title">Exportar Evoluções</div>
+    </div>
+    <div class="page-body" id="exportar-body"></div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════
+    // ETAPAS 1 + 2 — Estado e Persistência
+    // ═══════════════════════════════════
+
+    // ── STATE ──
+    var STATE_KEY = 'bys_app_state';
+
+    var state = { personal: '', alunos: [], evolucoes: [] };
+
+    function defaultState() {
+      return { personal: '', alunos: [], evolucoes: [] };
+    }
+
+    function saveState() {
+      try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {}
+    }
+
+    function loadState() {
+      try {
+        var saved = localStorage.getItem(STATE_KEY);
+        if (saved) {
+          var parsed = JSON.parse(saved);
+          state.personal  = parsed.personal  || '';
+          state.alunos    = parsed.alunos    || [];
+          state.evolucoes = parsed.evolucoes || [];
+        }
+      } catch(e) { state = defaultState(); }
+    }
+
+    var navHistory = ['pg-alunos'];
+
+    function navigate(id) {
+      navHistory.push(id);
+      showPage(id);
+    }
+
+    function goBack() {
+      if (navHistory.length > 1) navHistory.pop();
+      var prev = navHistory[navHistory.length - 1];
+      showPage(prev);
+    }
+
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(function(p) {
+        p.style.display = 'none';
+      });
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2800);
+    }
+
+    function openModal(htmlContent) {
+      document.getElementById('modal-content').innerHTML = htmlContent;
+      document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    // Stub functions — implementadas nas próximas etapas
+    function savePersonal() {
+      var nome = document.getElementById('inp-personal').value.trim();
+      if (!nome) { showToast('⚠️ Digite seu nome'); return; }
+      state.personal = nome;
+      saveState();
+      document.getElementById('titulo-alunos').textContent = 'Olá, ' + nome.split(' ')[0] + ' 👋';
+      navigate('pg-alunos');
+      renderAlunos();
+    }
+    function openAddAluno() { showToast('E3 ainda não implementada'); }
+
+    // ── ALUNOS ──
+
+    var currentAlunoId = null;
+
+    function uid() {
+      return 'a_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+    }
+
+    function renderAlunos() {
+      var busca = (document.getElementById('inp-busca').value || '').toLowerCase();
+      busca = busca.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      var lista = state.alunos.filter(function(a) {
+        var nome = a.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        return nome.indexOf(busca) !== -1;
+      });
+
+      var el = document.getElementById('lista-alunos');
+
+      if (lista.length === 0) {
+        el.innerHTML = '<div class="empty"><span class="empty-icon">' +
+          (busca ? '🔍' : '👥') + '</span><h3>' +
+          (busca ? 'Nenhum aluno encontrado' : 'Nenhum aluno ainda') +
+          '</h3><p>' + (busca ? 'Tente outro nome.' : 'Toque em + para adicionar seu primeiro aluno.') + '</p></div>';
+        return;
+      }
+
+      var html = '';
+      lista.forEach(function(aluno) {
+        var evolsAluno = state.evolucoes.filter(function(e) { return e.alunoId === aluno.id; });
+        var pendentes  = evolsAluno.filter(function(e) { return e.status === 'pendente'; }).length;
+        var ultima     = evolsAluno.length ? evolsAluno[evolsAluno.length - 1].data : null;
+        var iniciais   = aluno.nome.split(' ').slice(0,2).map(function(s){ return s[0]; }).join('');
+        var badge      = pendentes > 0
+          ? '<span class="aluno-badge badge-pendente">' + pendentes + ' pendente' + (pendentes > 1 ? 's' : '') + '</span>'
+          : '<span class="aluno-badge badge-ok">✓ ok</span>';
+
+        html += '<div class="aluno-card" onclick="openHistorico(\'' + aluno.id + '\')">' +
+          '<div class="aluno-avatar">' + iniciais + '</div>' +
+          '<div class="aluno-info">' +
+            '<div class="aluno-nome">' + escHtml(aluno.nome) + '</div>' +
+            '<div class="aluno-sub">' + (ultima ? 'Último registro: ' + fmtDate(ultima) : 'Nenhum registro ainda') + '</div>' +
+          '</div>' +
+          badge +
+          '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    function filterAlunos() {
+      renderAlunos();
+    }
+
+    function openAddAluno() {
+      openModal(
+        '<div class="modal-title">Novo Aluno</div>' +
+        '<div class="input-group"><label class="input-label">Nome completo</label>' +
+        '<input id="modal-inp-nome" class="input" type="text" placeholder="Nome do aluno" autocomplete="off" /></div>' +
+        '<button class="btn-primary mt8" onclick="addAluno()">Adicionar</button>' +
+        '<button class="btn-secondary mt8" onclick="closeModal()">Cancelar</button>'
+      );
+      setTimeout(function() {
+        var inp = document.getElementById('modal-inp-nome');
+        if (inp) inp.focus();
+      }, 100);
+    }
+
+    function addAluno() {
+      var nome = document.getElementById('modal-inp-nome').value.trim();
+      if (!nome) { showToast('⚠️ Digite o nome do aluno'); return; }
+      var aluno = { id: uid(), nome: nome, criadoEm: new Date().toISOString() };
+      state.alunos.push(aluno);
+      saveState();
+      closeModal();
+      renderAlunos();
+      showToast('✅ ' + nome.split(' ')[0] + ' adicionado!');
+    }
+
+    function deleteAluno(id, nome) {
+      if (!confirm('Remover ' + nome + '? Todas as evoluções deste aluno também serão apagadas.')) return;
+      state.alunos    = state.alunos.filter(function(a) { return a.id !== id; });
+      state.evolucoes = state.evolucoes.filter(function(e) { return e.alunoId !== id; });
+      saveState();
+      renderAlunos();
+      showToast('🗑 Aluno removido');
+    }
+
+    function openHistorico(alunoId) {
+      currentAlunoId = alunoId;
+      var aluno = state.alunos.find(function(a) { return a.id === alunoId; });
+      if (!aluno) return;
+      document.getElementById('hist-aluno-nome').textContent = aluno.nome;
+      renderHistorico(alunoId);
+      navigate('pg-historico');
+    }
+
+    function renderHistorico(alunoId) {
+      var evols = state.evolucoes.filter(function(e) { return e.alunoId === alunoId; })
+        .sort(function(a, b) { return b.data.localeCompare(a.data); });
+
+      var el = document.getElementById('lista-historico');
+
+      if (evols.length === 0) {
+        el.innerHTML = '<div class="empty"><span class="empty-icon">📋</span>' +
+          '<h3>Nenhuma evolução ainda</h3><p>Toque em + para registrar a primeira evolução deste aluno.</p></div>';
+        return;
+      }
+
+      var html = '';
+      evols.forEach(function(ev) {
+        var statusBadge = ev.status === 'exportado'
+          ? '<span class="evol-status-badge" style="background:rgba(76,175,125,0.12);color:#4CAF7D;border:1px solid rgba(76,175,125,0.3)">✓ enviado</span>'
+          : '<span class="evol-status-badge" style="background:rgba(245,158,11,0.12);color:#F59E0B;border:1px solid rgba(245,158,11,0.3)">pendente</span>';
+
+        var stats = '';
+        if (ev.peso)    stats += '<div class="evol-stat"><span class="evol-stat-val">' + ev.peso + '</span><span class="evol-stat-lbl">kg</span></div>';
+        if (ev.gordura) stats += '<div class="evol-stat"><span class="evol-stat-val">' + ev.gordura + '%</span><span class="evol-stat-lbl">Gordura</span></div>';
+        if (ev.musculo) stats += '<div class="evol-stat"><span class="evol-stat-val">' + ev.musculo + '%</span><span class="evol-stat-lbl">Músculo</span></div>';
+
+        var obs = ev.observacoes ? '<div class="evol-obs">' + escHtml(ev.observacoes) + '</div>' : '';
+
+        html += '<div class="evol-card">' +
+          '<div class="evol-header"><span class="evol-date">' + fmtDate(ev.data) + '</span>' + statusBadge + '</div>' +
+          (stats ? '<div class="evol-grid">' + stats + '</div>' : '') +
+          obs + '</div>';
+      });
+      el.innerHTML = html;
+    }
+
+    // ── UTILS ──
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '';
+      var parts = iso.split('-');
+      if (parts.length === 3) return parts[2] + '/' + parts[1] + '/' + parts[0];
+      return iso;
+    }
+
+    function todayISO() {
+      var d = new Date();
+      var mm = String(d.getMonth()+1).padStart(2,'0');
+      var dd = String(d.getDate()).padStart(2,'0');
+      return d.getFullYear() + '-' + mm + '-' + dd;
+    }
+
+    // ── FORMULÁRIO DE EVOLUÇÃO ──
+
+    var currentCargaIdx = 0;
+
+    function openForm(alunoId) {
+      currentAlunoId = alunoId;
+      var aluno = state.alunos.find(function(a) { return a.id === alunoId; });
+      if (!aluno) return;
+
+      document.getElementById('form-aluno-nome').textContent = aluno.nome;
+      currentCargaIdx = 0;
+
+      document.getElementById('pg-form-body').innerHTML = buildFormHTML();
+      bindAccordion();
+      navigate('pg-form');
+    }
+
+    function buildFormHTML() {
+      return '' +
+        // Dados principais
+        '<div class="input-group">' +
+          '<label class="input-label">Data</label>' +
+          '<input id="f-data" class="input" type="date" value="' + todayISO() + '" />' +
+        '</div>' +
+
+        '<div class="input-row">' +
+          '<div class="input-group">' +
+            '<label class="input-label">Peso (kg)</label>' +
+            '<input id="f-peso" class="input" type="number" step="0.1" min="0" placeholder="68.5" inputmode="decimal" />' +
+          '</div>' +
+          '<div class="input-group">' +
+            '<label class="input-label">% Gordura</label>' +
+            '<input id="f-gordura" class="input" type="number" step="0.1" min="0" max="100" placeholder="22.0" inputmode="decimal" />' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="input-group">' +
+          '<label class="input-label">% Músculo</label>' +
+          '<input id="f-musculo" class="input" type="number" step="0.1" min="0" max="100" placeholder="31.0" inputmode="decimal" />' +
+        '</div>' +
+
+        // Medidas (accordion)
+        '<div class="accordion-header" onclick="toggleAccordion(this)">' +
+          '<span>📏 Medidas (cm)</span>' +
+          '<span class="accordion-arrow">▼</span>' +
+        '</div>' +
+        '<div class="accordion-body">' +
+          '<div class="input-row">' +
+            '<div class="input-group">' +
+              '<label class="input-label">Cintura</label>' +
+              '<input id="f-cintura" class="input" type="number" step="0.5" min="0" placeholder="72" inputmode="decimal" />' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-label">Quadril</label>' +
+              '<input id="f-quadril" class="input" type="number" step="0.5" min="0" placeholder="95" inputmode="decimal" />' +
+            '</div>' +
+          '</div>' +
+          '<div class="input-row">' +
+            '<div class="input-group">' +
+              '<label class="input-label">Braço</label>' +
+              '<input id="f-braco" class="input" type="number" step="0.5" min="0" placeholder="28" inputmode="decimal" />' +
+            '</div>' +
+            '<div class="input-group">' +
+              '<label class="input-label">Coxa</label>' +
+              '<input id="f-coxa" class="input" type="number" step="0.5" min="0" placeholder="52" inputmode="decimal" />' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+
+        // Cargas (dinâmico)
+        '<div class="divider"></div>' +
+        '<div class="row-between" style="margin-bottom:12px;">' +
+          '<span class="input-label" style="margin:0">🏋️ Cargas dos exercícios</span>' +
+          '<button class="btn-icon" onclick="addCargaRow()">+ Exercício</button>' +
+        '</div>' +
+        '<div id="cargas-container"></div>' +
+
+        // Observações
+        '<div class="divider"></div>' +
+        '<div class="input-group">' +
+          '<label class="input-label">Observações</label>' +
+          '<textarea id="f-obs" class="input" rows="3" placeholder="Postura, progressão, ajustes para próxima sessão..."></textarea>' +
+        '</div>' +
+
+        '<div class="mt16">' +
+          '<button class="btn-primary" onclick="salvarEvolucao()">Salvar Evolução</button>' +
+        '</div>';
+    }
+
+    function toggleAccordion(header) {
+      var arrow = header.querySelector('.accordion-arrow');
+      var body  = header.nextElementSibling;
+      var isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      arrow.classList.toggle('open', !isOpen);
+    }
+
+    function bindAccordion() {
+      // Accordion já vinculado via onclick no HTML inline
+    }
+
+    function addCargaRow() {
+      var idx = currentCargaIdx++;
+      var container = document.getElementById('cargas-container');
+      var row = document.createElement('div');
+      row.className = 'carga-row';
+      row.id = 'carga-' + idx;
+      row.innerHTML =
+        '<input class="input" type="text" placeholder="Exercício" id="c-ex-' + idx + '" style="font-size:14px;height:42px;" />' +
+        '<input class="input" type="number" placeholder="kg" id="c-kg-' + idx + '" style="font-size:14px;height:42px;" inputmode="decimal" step="0.5" />' +
+        '<input class="input" type="number" placeholder="reps" id="c-reps-' + idx + '" style="font-size:14px;height:42px;" inputmode="numeric" />' +
+        '<input class="input" type="number" placeholder="sér" id="c-ser-' + idx + '" style="font-size:14px;height:42px;" inputmode="numeric" />' +
+        '<button class="btn-danger" style="height:42px;padding:0 10px;font-size:16px;" onclick="removeCarga(' + idx + ')">×</button>';
+      container.appendChild(row);
+    }
+
+    function removeCarga(idx) {
+      var row = document.getElementById('carga-' + idx);
+      if (row) row.remove();
+    }
+
+    function coletarCargas() {
+      var cargas = [];
+      var rows = document.querySelectorAll('.carga-row');
+      rows.forEach(function(row) {
+        var id  = row.id.replace('carga-', '');
+        var ex  = (document.getElementById('c-ex-' + id)   || {}).value || '';
+        var kg  = (document.getElementById('c-kg-' + id)   || {}).value || '';
+        var rep = (document.getElementById('c-reps-' + id) || {}).value || '';
+        var ser = (document.getElementById('c-ser-' + id)  || {}).value || '';
+        if (ex || kg) {
+          cargas.push({
+            exercicio: ex.trim(),
+            kg:   parseFloat(kg)  || 0,
+            reps: parseInt(rep)   || 0,
+            series: parseInt(ser) || 0
+          });
+        }
+      });
+      return cargas;
+    }
+
+    function salvarEvolucao() {
+      var data    = document.getElementById('f-data').value;
+      var peso    = parseFloat(document.getElementById('f-peso').value)    || null;
+      var gordura = parseFloat(document.getElementById('f-gordura').value) || null;
+      var musculo = parseFloat(document.getElementById('f-musculo').value) || null;
+      var cintura = parseFloat(document.getElementById('f-cintura').value) || null;
+      var quadril = parseFloat(document.getElementById('f-quadril').value) || null;
+      var braco   = parseFloat(document.getElementById('f-braco').value)   || null;
+      var coxa    = parseFloat(document.getElementById('f-coxa').value)    || null;
+      var obs     = document.getElementById('f-obs').value.trim();
+      var cargas  = coletarCargas();
+
+      // Validação: ao menos 1 campo preenchido
+      if (!peso && !gordura && !musculo && !cintura && !obs && cargas.length === 0) {
+        showToast('⚠️ Preencha ao menos um campo');
+        return;
+      }
+
+      var aluno = state.alunos.find(function(a) { return a.id === currentAlunoId; });
+
+      var evol = {
+        id:        'evol_' + Date.now(),
+        alunoId:   currentAlunoId,
+        alunoNome: aluno ? aluno.nome : '',
+        data:      data || todayISO(),
+        peso:      peso,
+        gordura:   gordura,
+        musculo:   musculo,
+        medidas:   { cintura: cintura, quadril: quadril, braco: braco, coxa: coxa },
+        cargas:    cargas,
+        observacoes: obs,
+        status:    'pendente'
+      };
+
+      state.evolucoes.push(evol);
+      saveState();
+
+      showToast('✅ Evolução salva!');
+
+      // Volta para o histórico do aluno
+      renderAlunos();
+      openHistorico(currentAlunoId);
+    }
+
+    // Substitui o stub de openForm
+    // (a função já foi declarada acima, o stub foi removido)
+
+    // ── EXPORTAÇÃO ──
+
+    function renderExportar() {
+      var pendentes = state.evolucoes.filter(function(e) { return e.status === 'pendente'; });
+      var total     = state.evolucoes.length;
+
+      // Agrupa pendentes por aluno
+      var porAluno = {};
+      pendentes.forEach(function(ev) {
+        if (!porAluno[ev.alunoNome]) porAluno[ev.alunoNome] = 0;
+        porAluno[ev.alunoNome]++;
+      });
+
+      var resumoAlunos = Object.keys(porAluno).map(function(nome) {
+        return '<div class="row" style="padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);">' +
+          '<span style="flex:1;font-size:14px;">' + escHtml(nome) + '</span>' +
+          '<span style="color:#F59E0B;font-size:13px;font-weight:700;">' + porAluno[nome] + ' reg.</span>' +
+          '</div>';
+      }).join('');
+
+      var el = document.getElementById('exportar-body');
+      el.innerHTML =
+        '<div class="export-summary">' +
+          '<span class="export-count">' + pendentes.length + '</span>' +
+          '<span class="export-label">registros pendentes de envio</span>' +
+          '<span class="export-name">' + escHtml(state.personal) + '</span>' +
+        '</div>' +
+
+        (pendentes.length > 0
+          ? '<div style="margin-bottom:20px;">' +
+              '<span class="section-label">Alunos com pendências</span>' +
+              resumoAlunos +
+            '</div>' +
+            '<button class="btn-primary" onclick="exportarJSON(false)" style="margin-bottom:10px;">📤 Exportar pendentes (' + pendentes.length + ')</button>' +
+            '<button class="btn-secondary" onclick="exportarJSON(true)">Exportar tudo (' + total + ' registros)</button>'
+          : '<div class="empty"><span class="empty-icon">✅</span><h3>Tudo enviado!</h3><p>Nenhum registro pendente. Ótimo trabalho.</p></div>' +
+            (total > 0 ? '<button class="btn-secondary mt16" onclick="exportarJSON(true)">Exportar tudo (' + total + ' registros)</button>' : '')
+        );
+    }
+
+    function exportarJSON(todos) {
+      var lista = todos
+        ? state.evolucoes
+        : state.evolucoes.filter(function(e) { return e.status === 'pendente'; });
+
+      if (lista.length === 0) {
+        showToast('⚠️ Nenhum registro para exportar');
+        return;
+      }
+
+      var payload = {
+        versao:      '1.0',
+        exportadoEm: new Date().toISOString(),
+        personal:    state.personal,
+        evolucoes:   lista
+      };
+
+      var json     = JSON.stringify(payload, null, 2);
+      var blob     = new Blob([json], { type: 'application/json' });
+      var hoje     = todayISO();
+      var nomeArq  = 'evolucoes-' + state.personal.toLowerCase().replace(/\s+/g, '-') + '-' + hoje + '.json';
+
+      // Tenta compartilhamento nativo (mobile)
+      if (navigator.share) {
+        var file = new File([blob], nomeArq, { type: 'application/json' });
+        navigator.share({ title: 'Evoluções BYS', files: [file] })
+          .then(function() {
+            if (!todos) marcarExportados(lista);
+          })
+          .catch(function(err) {
+            if (err.name !== 'AbortError') downloadJSON(blob, nomeArq, lista, todos);
+          });
+      } else {
+        downloadJSON(blob, nomeArq, lista, todos);
+      }
+    }
+
+    function downloadJSON(blob, nomeArq, lista, todos) {
+      var url  = URL.createObjectURL(blob);
+      var link = document.createElement('a');
+      link.href     = url;
+      link.download = nomeArq;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+
+      if (!todos) {
+        // Pergunta se deve marcar como enviados
+        setTimeout(function() {
+          if (confirm('Marcar ' + lista.length + ' registro(s) como "enviados"?\n\nFaça isso apenas após confirmar que o gestor recebeu o arquivo.')) {
+            marcarExportados(lista);
+          }
+        }, 500);
+      } else {
+        showToast('📄 ' + lista.length + ' registro(s) exportados');
+      }
+    }
+
+    function marcarExportados(lista) {
+      var ids = lista.map(function(e) { return e.id; });
+      state.evolucoes.forEach(function(ev) {
+        if (ids.indexOf(ev.id) !== -1) ev.status = 'exportado';
+      });
+      saveState();
+      renderExportar();
+      renderAlunos();
+      showToast('✅ Marcados como enviados!');
+    }
+
+    // ── PWA ──
+
+    var deferredInstallPrompt = null;
+
+    function instalarApp() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(function(result) {
+          if (result.outcome === 'accepted') showToast('✅ App instalado!');
+          deferredInstallPrompt = null;
+          document.getElementById('btn-instalar').style.display = 'none';
+        });
+      }
+    }
+
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      var btn = document.getElementById('btn-instalar');
+      if (btn) btn.style.display = 'flex';
+    });
+
+    window.addEventListener('appinstalled', function() {
+      deferredInstallPrompt = null;
+      var btn = document.getElementById('btn-instalar');
+      if (btn) btn.style.display = 'none';
+      showToast('✅ App instalado com sucesso!');
+    });
+
+    // Detecta iOS e mostra banner de instrução
+    function checkIOS() {
+      var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      var isStandalone = window.navigator.standalone === true;
+      if (isIOS && !isStandalone) {
+        var banner = document.getElementById('ios-install-banner');
+        if (banner) banner.style.display = 'flex';
+      }
+    }
+
+    // Registra Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw-evolucoes.js')
+          .catch(function() {}); // silencia erros se não estiver em HTTPS
+      });
+    }
+
+    // ── INIT
+    window.addEventListener('DOMContentLoaded', function() {
+      loadState();
+      checkIOS();
+      if (state.personal) {
+        document.getElementById('titulo-alunos').textContent = 'Olá, ' + state.personal.split(' ')[0] + ' 👋';
+        document.getElementById('inp-personal').value = state.personal;
+        showPage('pg-alunos');
+        renderAlunos();
+      } else {
+        showPage('pg-config');
+      }
+    });
+  </script>
+</body>
+</html>
