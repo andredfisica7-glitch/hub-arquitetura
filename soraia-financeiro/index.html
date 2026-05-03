@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Soraia · Financeiro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:        #FAF8F5;
+      --surface:   #FFFFFF;
+      --surface2:  #F2EDE8;
+      --nude:      #E8DDD3;
+      --gold:      #C9A96E;
+      --rose:      #B8857A;
+      --pj:        #D4854A;
+      --pj-bg:     #FBF0E8;
+      --pj-border: #F0C4A0;
+      --text:      #2C2C2C;
+      --text-mid:  #7A7A7A;
+      --text-light:#B0A8A0;
+      --danger:    #C0544A;
+      --income:    #5A9E8A;
+      --income-bg: #EEF6F3;
+      --income-border: #B8DDD5;
+      --r:         16px;
+      --r-sm:      10px;
+      --sh:        0 2px 12px rgba(44,44,44,.08);
+      --sh-md:     0 4px 24px rgba(44,44,44,.13);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{
+      font-family:'Poppins',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+    #app-shell{display:contents;}
+
+    /* ── LAYOUT ── */
+    #app{padding-bottom:80px;max-width:900px;margin:0 auto;}
+    .view{display:none;animation:fadeIn .2s ease;}
+    .view.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    /* ── HEADER ── */
+    .header{
+      background:var(--surface);
+      padding:18px 20px 14px;
+      position:sticky;top:0;z-index:10;
+      box-shadow:0 1px 0 var(--nude);
+    }
+    .header-row{display:flex;align-items:center;justify-content:space-between;}
+    .header h1{font-size:17px;font-weight:600;color:var(--text);}
+    .header .subtitle{font-size:12px;color:var(--text-mid);margin-top:1px;}
+    .month-nav{display:flex;align-items:center;gap:8px;}
+    .month-nav button{
+      background:var(--surface2);border:none;
+      width:30px;height:30px;border-radius:50%;cursor:pointer;
+      font-size:14px;display:flex;align-items:center;justify-content:center;
+      color:var(--text-mid);transition:background .15s;
+    }
+    .month-nav button:active{background:var(--nude);}
+    .month-name{font-size:13px;font-weight:500;color:var(--text);min-width:110px;text-align:center;text-transform:capitalize;}
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;
+      background:var(--surface);
+      border-top:1px solid var(--nude);
+      display:flex;z-index:20;
+      padding-bottom:env(safe-area-inset-bottom);
+      max-width:900px;margin:0 auto;left:50%;transform:translateX(-50%);width:100%;
+    }
+    .nav-item{
+      flex:1;display:flex;flex-direction:column;align-items:center;
+      padding:10px 4px 8px;cursor:pointer;gap:3px;
+      color:var(--text-light);font-size:10px;font-weight:500;
+      transition:color .15s;
+      border:none;background:none;
+    }
+    .nav-item.active{color:var(--gold);}
+    .nav-item svg{width:22px;height:22px;}
+    .nav-item.pj-nav.active{color:var(--pj);}
+    .nav-item.reports-nav.active{color:var(--rose);}
+    .nav-item.incomes-nav.active{color:var(--income);}
+    /* 6 items: compact */
+    .bottom-nav .nav-item{font-size:9px;padding:9px 2px 7px;}
+    .bottom-nav .nav-item svg{width:20px;height:20px;}
+
+    /* ── SECTION ── */
+    .section{padding:16px 20px 0;}
+    .section-title{font-size:13px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+
+    /* ── SUMMARY GRID ── */
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px 20px 0;}
+    .summary-card{
+      background:var(--surface);border-radius:var(--r);
+      padding:14px 16px;box-shadow:var(--sh);
+    }
+    .summary-card .sc-label{font-size:11px;color:var(--text-mid);margin-bottom:4px;}
+    .summary-card .sc-value{font-size:18px;font-weight:600;color:var(--text);}
+    .summary-card.pj-card{background:var(--pj-bg);border:1.5px solid var(--pj-border);}
+    .summary-card.pj-card .sc-label{color:var(--pj);}
+    .summary-card.pj-card .sc-value{color:var(--pj);}
+
+    /* ── PJ BANNER ── */
+    .pj-banner{
+      margin:16px 20px 0;
+      background:var(--pj);border-radius:var(--r);
+      padding:18px 20px;cursor:pointer;
+      display:flex;align-items:center;justify-content:space-between;
+      box-shadow:0 4px 16px rgba(212,133,74,.3);
+      transition:transform .1s;
+    }
+    .pj-banner:active{transform:scale(.98);}
+    .pj-banner-left{}
+    .pj-banner-tag{
+      font-size:10px;font-weight:600;color:rgba(255,255,255,.75);
+      text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px;
+    }
+    .pj-banner-label{font-size:13px;color:rgba(255,255,255,.9);margin-bottom:2px;}
+    .pj-banner-value{font-size:26px;font-weight:700;color:#FFF;}
+    .pj-banner-arrow{font-size:20px;color:rgba(255,255,255,.7);}
+    .pj-banner-zero{opacity:.7;}
+
+    /* ── CHART ── */
+    .chart-section{
+      margin:16px 20px 0;
+      background:var(--surface);border-radius:var(--r);
+      padding:18px;box-shadow:var(--sh);
+    }
+    .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;}
+    .chart-wrap{position:relative;height:180px;display:flex;align-items:center;justify-content:center;}
+    .chart-center{
+      position:absolute;text-align:center;pointer-events:none;
+    }
+    .chart-center-value{font-size:18px;font-weight:700;color:var(--text);}
+    .chart-center-label{font-size:10px;color:var(--text-mid);}
+    .chart-legend{margin-top:14px;display:flex;flex-direction:column;gap:7px;}
+    .legend-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+    .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .legend-name{flex:1;color:var(--text);}
+    .legend-value{font-weight:500;color:var(--text);}
+    .legend-pct{color:var(--text-mid);font-size:11px;margin-left:4px;}
+
+    /* ── CARD LIST (cartões de crédito) ── */
+    .cards-list{padding:16px 20px 0;display:flex;flex-direction:column;gap:12px;}
+    .credit-card{
+      border-radius:var(--r);padding:20px;
+      background:linear-gradient(135deg,var(--card-color,#C9A96E) 0%,color-mix(in srgb,var(--card-color,#C9A96E) 70%,#000) 100%);
+      box-shadow:var(--sh-md);position:relative;overflow:hidden;
+    }
+    .credit-card::after{
+      content:'';position:absolute;right:-20px;top:-20px;
+      width:120px;height:120px;border-radius:50%;
+      background:rgba(255,255,255,.1);
+    }
+    .credit-card::before{
+      content:'';position:absolute;right:20px;top:30px;
+      width:80px;height:80px;border-radius:50%;
+      background:rgba(255,255,255,.07);
+    }
+    .card-brand{font-size:11px;font-weight:600;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.8px;}
+    .card-number{font-size:16px;font-weight:500;color:#FFF;margin:12px 0 4px;letter-spacing:2px;}
+    .card-name{font-size:13px;color:rgba(255,255,255,.85);}
+    .card-total{margin-top:14px;border-top:1px solid rgba(255,255,255,.2);padding-top:12px;}
+    .card-total-label{font-size:10px;color:rgba(255,255,255,.65);}
+    .card-total-value{font-size:20px;font-weight:700;color:#FFF;}
+    .card-actions{display:flex;justify-content:flex-end;margin-top:8px;}
+    .card-delete-btn{
+      background:rgba(255,255,255,.2);border:none;border-radius:20px;
+      color:#FFF;font-size:11px;padding:5px 12px;cursor:pointer;font-family:'Poppins',sans-serif;
+    }
+    .add-card-btn{
+      margin:0 20px;
+      background:var(--surface);border:2px dashed var(--nude);
+      border-radius:var(--r);padding:16px;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;font-family:'Poppins',sans-serif;font-size:14px;
+      color:var(--text-mid);font-weight:500;transition:border-color .15s,background .15s;
+    }
+    .add-card-btn:active{background:var(--surface2);border-color:var(--gold);}
+
+    /* ── EXPENSES LIST ── */
+    .filter-bar{
+      padding:12px 20px;display:flex;gap:8px;overflow-x:auto;
+      scrollbar-width:none;
+    }
+    .filter-bar::-webkit-scrollbar{display:none;}
+    .filter-chip{
+      flex-shrink:0;padding:6px 12px;border-radius:20px;
+      background:var(--surface);border:1.5px solid var(--nude);
+      font-size:12px;font-weight:500;color:var(--text-mid);
+      cursor:pointer;white-space:nowrap;font-family:'Poppins',sans-serif;
+      transition:all .15s;
+    }
+    .filter-chip.active{background:var(--gold);border-color:var(--gold);color:#FFF;}
+    .filter-chip.pj-chip.active{background:var(--pj);border-color:var(--pj);color:#FFF;}
+
+    .expense-list{padding:0 20px;}
+    .expense-item{
+      background:var(--surface);border-radius:var(--r-sm);
+      padding:12px 14px;margin-bottom:8px;
+      display:flex;align-items:center;gap:12px;
+      box-shadow:var(--sh);position:relative;
+      transition:transform .1s;
+    }
+    .expense-item:active{transform:scale(.99);}
+    .expense-item.is-pj{border-left:3px solid var(--pj);}
+    .cat-dot{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+    .expense-info{flex:1;min-width:0;}
+    .expense-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .expense-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;}
+    .expense-date{font-size:11px;color:var(--text-mid);}
+    .card-chip{
+      font-size:10px;padding:2px 7px;border-radius:10px;
+      color:#FFF;font-weight:500;white-space:nowrap;
+    }
+    .pj-badge{
+      font-size:9px;padding:2px 7px;border-radius:10px;
+      background:var(--pj-bg);color:var(--pj);font-weight:600;
+      border:1px solid var(--pj-border);white-space:nowrap;
+    }
+    .expense-right{text-align:right;flex-shrink:0;}
+    .expense-amount{font-size:15px;font-weight:600;}
+    .expense-amount.pj{color:var(--pj);}
+    .expense-delete{
+      position:absolute;top:8px;right:8px;
+      background:none;border:none;color:var(--text-light);
+      font-size:14px;cursor:pointer;padding:2px 4px;
+    }
+    .empty-state{
+      text-align:center;padding:48px 20px;
+      color:var(--text-mid);
+    }
+    .empty-state .icon{font-size:40px;margin-bottom:12px;}
+    .empty-state p{font-size:14px;}
+
+    /* ── FAB ── */
+    .fab{
+      position:fixed;bottom:90px;right:20px;
+      width:52px;height:52px;border-radius:50%;
+      background:var(--gold);box-shadow:0 4px 16px rgba(201,169,110,.4);
+      border:none;color:#FFF;font-size:26px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;z-index:15;transition:transform .15s,box-shadow .15s;
+    }
+    .fab:active{transform:scale(.93);box-shadow:0 2px 8px rgba(201,169,110,.3);}
+    .fab-left{right:auto;left:20px;}
+
+    /* ── MODAL OVERLAY ── */
+    .modal-overlay{
+      position:fixed;inset:0;background:rgba(44,44,44,.5);
+      z-index:30;opacity:0;transition:opacity .25s;
+      backdrop-filter:blur(2px);
+    }
+    .modal-overlay.visible{opacity:1;}
+    .modal-overlay.hidden{display:none;}
+
+    /* ── BOTTOM SHEET ── */
+    .bottom-sheet{
+      position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);
+      width:100%;max-width:430px;
+      background:var(--surface);border-radius:24px 24px 0 0;
+      padding:0 0 env(safe-area-inset-bottom);
+      z-index:40;transition:transform .3s cubic-bezier(.4,0,.2,1);
+      max-height:90vh;overflow-y:auto;
+    }
+    .bottom-sheet.open{transform:translateX(-50%) translateY(0);}
+    .bottom-sheet.hidden{display:none;}
+    .sheet-handle{
+      width:36px;height:4px;background:var(--nude);
+      border-radius:2px;margin:12px auto 0;
+    }
+    .sheet-header{
+      padding:16px 20px 12px;
+      border-bottom:1px solid var(--nude);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .sheet-title{font-size:16px;font-weight:600;}
+    .sheet-close{background:none;border:none;font-size:22px;color:var(--text-mid);cursor:pointer;padding:0 4px;}
+    .sheet-body{padding:16px 20px 24px;}
+
+    /* ── FORM ── */
+    .form-group{margin-bottom:16px;}
+    .form-label{font-size:12px;font-weight:500;color:var(--text-mid);margin-bottom:6px;display:block;}
+    .form-input,.form-select{
+      width:100%;padding:12px 14px;
+      background:var(--surface2);border:1.5px solid transparent;
+      border-radius:var(--r-sm);font-family:'Poppins',sans-serif;
+      font-size:14px;color:var(--text);outline:none;
+      transition:border-color .15s;
+      -webkit-appearance:none;
+    }
+    .form-input:focus,.form-select:focus{border-color:var(--gold);}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .pj-toggle{
+      width:100%;padding:14px 16px;
+      background:var(--surface2);border:2px solid transparent;
+      border-radius:var(--r-sm);cursor:pointer;
+      display:flex;align-items:center;gap:12px;
+      font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;
+      color:var(--text-mid);transition:all .2s;
+      text-align:left;
+    }
+    .pj-toggle.on{
+      background:var(--pj-bg);border-color:var(--pj);color:var(--pj);
+    }
+    .pj-toggle-icon{font-size:20px;}
+    .pj-toggle-text{}
+    .pj-toggle-sub{font-size:11px;font-weight:400;opacity:.75;display:block;margin-top:1px;}
+    .toggle-indicator{
+      margin-left:auto;width:36px;height:20px;
+      background:var(--nude);border-radius:10px;
+      position:relative;transition:background .2s;flex-shrink:0;
+    }
+    .toggle-indicator::after{
+      content:'';position:absolute;left:2px;top:2px;
+      width:16px;height:16px;border-radius:50%;
+      background:#FFF;transition:transform .2s;
+      box-shadow:0 1px 3px rgba(0,0,0,.15);
+    }
+    .pj-toggle.on .toggle-indicator{background:var(--pj);}
+    .pj-toggle.on .toggle-indicator::after{transform:translateX(16px);}
+
+    .color-picker{display:flex;gap:8px;flex-wrap:wrap;}
+    .color-swatch{
+      width:32px;height:32px;border-radius:50%;cursor:pointer;
+      border:2.5px solid transparent;transition:transform .15s,border-color .15s;
+    }
+    .color-swatch.selected{border-color:var(--text);transform:scale(1.15);}
+
+    .btn{
+      width:100%;padding:14px;border-radius:var(--r-sm);
+      border:none;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;
+      cursor:pointer;transition:opacity .15s,transform .1s;
+    }
+    .btn:active{transform:scale(.98);opacity:.9;}
+    .btn-primary{background:var(--gold);color:#FFF;}
+    .btn-pj{background:var(--pj);color:#FFF;}
+    .btn-danger{background:var(--danger);color:#FFF;margin-top:8px;}
+    .btn-ghost{background:var(--surface2);color:var(--text);}
+
+    /* ── PJ VIEW ── */
+    .pj-year-banner{
+      margin:16px 20px 0;
+      background:linear-gradient(135deg,var(--pj) 0%,#B8612A 100%);
+      border-radius:var(--r);padding:20px;
+      box-shadow:0 4px 20px rgba(212,133,74,.3);
+    }
+    .pj-year-label{font-size:11px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.8px;}
+    .pj-year-value{font-size:32px;font-weight:700;color:#FFF;margin:4px 0;}
+    .pj-year-sub{font-size:12px;color:rgba(255,255,255,.75);}
+    .pj-month-group{margin:16px 20px 0;}
+    .pj-month-header{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:8px;
+    }
+    .pj-month-name{font-size:13px;font-weight:600;color:var(--text);}
+    .pj-month-total{font-size:13px;font-weight:600;color:var(--pj);}
+    .copy-btn{
+      margin:16px 20px;
+      background:var(--surface);border:1.5px solid var(--nude);
+      border-radius:var(--r-sm);padding:12px;
+      display:flex;align-items:center;justify-content:center;gap:8px;
+      cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;
+      color:var(--text-mid);font-weight:500;transition:all .15s;
+    }
+    .copy-btn:active{background:var(--surface2);}
+
+    /* ── TOAST ── */
+    .toast{
+      position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+      background:var(--text);color:#FFF;border-radius:20px;
+      padding:10px 20px;font-size:13px;font-weight:500;
+      z-index:50;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap;
+    }
+    .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* ── RECENT EXPENSES (dashboard) ── */
+    .recent-list{padding:0 20px;}
+    .recent-item{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 0;border-bottom:1px solid var(--nude);
+    }
+    .recent-item:last-child{border-bottom:none;}
+    .recent-dot{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;}
+    .recent-info{flex:1;min-width:0;}
+    .recent-desc{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .recent-meta{font-size:11px;color:var(--text-mid);margin-top:1px;}
+    .recent-amount{font-size:14px;font-weight:600;}
+    .recent-amount.pj{color:var(--pj);}
+
+    /* ── PAYMENT METHOD ── */
+    .payment-methods{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
+    .pm-pill{
+      flex:1;min-width:54px;padding:9px 4px;border-radius:var(--r-sm);
+      background:var(--surface2);border:1.5px solid transparent;
+      font-size:11px;font-weight:500;color:var(--text-mid);
+      cursor:pointer;text-align:center;font-family:'Poppins',sans-serif;
+      transition:all .15s;white-space:nowrap;
+    }
+    .pm-pill.active{background:var(--surface);border-color:var(--gold);color:var(--text);box-shadow:var(--sh);}
+
+    /* ── INSTALLMENTS ── */
+    .installment-row{display:flex;gap:6px;flex-wrap:wrap;}
+    .inst-chip{
+      padding:7px 11px;border-radius:20px;
+      background:var(--surface2);border:1.5px solid transparent;
+      font-size:12px;font-weight:500;color:var(--text-mid);
+      cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s;
+    }
+    .inst-chip.active{background:var(--gold);border-color:var(--gold);color:#FFF;}
+    .inst-preview{
+      background:var(--pj-bg);border:1px solid var(--pj-border);
+      border-radius:var(--r-sm);padding:11px 14px;
+      font-size:12px;color:var(--text-mid);text-align:center;margin-top:8px;
+    }
+    .inst-preview strong{color:var(--pj);font-size:15px;display:block;margin-bottom:2px;}
+    .inst-badge{
+      font-size:9px;padding:2px 6px;border-radius:8px;
+      background:var(--surface2);color:var(--text-mid);font-weight:600;
+      border:1px solid var(--nude);
+    }
+    .pm-badge{
+      font-size:10px;padding:2px 7px;border-radius:8px;
+      font-weight:500;color:var(--text-mid);background:var(--surface2);
+      border:1px solid var(--nude);
+    }
+    .slide-section{overflow:hidden;transition:max-height .25s ease,opacity .25s ease;}
+    .slide-section.hidden-section{max-height:0!important;opacity:0;pointer-events:none;}
+
+    /* ── REPORTS ── */
+    .year-tabs{display:flex;gap:6px;padding:14px 20px 0;overflow-x:auto;scrollbar-width:none;}
+    .year-tabs::-webkit-scrollbar{display:none;}
+    .year-tab{
+      flex-shrink:0;padding:6px 14px;border-radius:20px;
+      background:var(--surface);border:1.5px solid var(--nude);
+      font-size:12px;font-weight:500;color:var(--text-mid);
+      cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s;
+    }
+    .year-tab.active{background:var(--rose);border-color:var(--rose);color:#FFF;}
+    .pie-section{
+      margin:14px 20px 0;background:var(--surface);
+      border-radius:var(--r);padding:18px;box-shadow:var(--sh);
+    }
+    .pie-section .chart-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;}
+    .pie-wrap{position:relative;height:220px;display:flex;align-items:center;justify-content:center;}
+    .cat-table{margin-top:16px;display:flex;flex-direction:column;gap:0;}
+    .cat-row{
+      display:flex;align-items:center;gap:10px;
+      padding:9px 0;border-bottom:1px solid var(--nude);
+    }
+    .cat-row:last-child{border-bottom:none;}
+    .cat-row-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .cat-row-name{flex:1;font-size:13px;color:var(--text);}
+    .cat-row-bar-wrap{width:70px;height:5px;background:var(--nude);border-radius:3px;overflow:hidden;}
+    .cat-row-bar{height:100%;border-radius:3px;transition:width .4s ease;}
+    .cat-row-pct{font-size:11px;color:var(--text-mid);width:30px;text-align:right;}
+    .cat-row-val{font-size:12px;font-weight:600;color:var(--text);text-align:right;}
+
+    /* ── FIXED EXPENSES ── */
+    .fixed-section{padding:14px 20px 0;}
+    .fixed-section-header{
+      display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;
+    }
+    .fixed-section-title{font-size:12px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;}
+    .fixed-manage-btn{font-size:11px;color:var(--gold);background:none;border:none;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:500;}
+    .fixed-item{
+      background:var(--surface);border-radius:var(--r-sm);
+      padding:11px 14px;margin-bottom:7px;
+      display:flex;align-items:center;gap:12px;
+      box-shadow:var(--sh);transition:opacity .2s;
+    }
+    .fixed-item.paid{opacity:.6;}
+    .fixed-check{
+      width:26px;height:26px;border-radius:50%;border:2px solid var(--nude);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;flex-shrink:0;transition:all .15s;background:var(--surface);
+      font-size:13px;
+    }
+    .fixed-check.checked{background:var(--income);border-color:var(--income);color:#FFF;}
+    .fixed-info{flex:1;min-width:0;}
+    .fixed-desc{font-size:13px;font-weight:500;}
+    .fixed-meta{font-size:11px;color:var(--text-mid);margin-top:2px;}
+    .fixed-amount{font-size:14px;font-weight:600;color:var(--text);flex-shrink:0;}
+    .fixed-amount.paid-amount{color:var(--income);}
+    .pending-badge{
+      font-size:9px;padding:2px 6px;border-radius:8px;
+      background:#FFF3E0;color:#E65100;font-weight:600;border:1px solid #FFCC80;
+    }
+    .paid-badge{
+      font-size:9px;padding:2px 6px;border-radius:8px;
+      background:var(--income-bg);color:var(--income);font-weight:600;border:1px solid var(--income-border);
+    }
+    .fixed-toggle{
+      width:100%;padding:14px 16px;
+      background:var(--surface2);border:2px solid transparent;
+      border-radius:var(--r-sm);cursor:pointer;
+      display:flex;align-items:center;gap:12px;
+      font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;
+      color:var(--text-mid);transition:all .2s;text-align:left;
+    }
+    .fixed-toggle.on{background:#EEF3FF;border-color:#8BA8D8;color:#3A5A8A;}
+    .fixed-toggle.on .toggle-indicator{background:#6A8EC4;}
+    .fixed-toggle.on .toggle-indicator::after{transform:translateX(16px);}
+    /* ── INCOME ── */
+    .income-banner{
+      margin:16px 20px 0;
+      background:linear-gradient(135deg,var(--income) 0%,#3D8070 100%);
+      border-radius:var(--r);padding:18px 20px;
+      box-shadow:0 4px 16px rgba(90,158,138,.25);
+    }
+    .income-banner-tag{font-size:10px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.8px;}
+    .income-banner-value{font-size:28px;font-weight:700;color:#FFF;margin:4px 0 2px;}
+    .income-banner-sub{font-size:12px;color:rgba(255,255,255,.75);}
+    .income-item{border-left:3px solid var(--income);}
+    .income-amount{color:var(--income)!important;}
+    .income-badge{
+      font-size:9px;padding:2px 7px;border-radius:8px;
+      background:var(--income-bg);color:var(--income);font-weight:600;
+      border:1px solid var(--income-border);
+    }
+    /* balance row in dashboard */
+    .balance-row{
+      margin:10px 20px 0;
+      background:var(--surface);border-radius:var(--r);
+      padding:14px 18px;box-shadow:var(--sh);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .balance-row-label{font-size:12px;color:var(--text-mid);}
+    .balance-row-value{font-size:18px;font-weight:700;}
+    .balance-positive{color:var(--income);}
+    .balance-negative{color:var(--danger);}
+    /* FAB speed-dial */
+    .fab-menu{
+      position:fixed;bottom:90px;right:20px;
+      display:flex;flex-direction:column;align-items:flex-end;gap:10px;
+      z-index:15;
+    }
+    .fab-option{
+      display:flex;align-items:center;gap:10px;
+      background:var(--surface);border:none;border-radius:28px;
+      padding:10px 16px 10px 12px;box-shadow:var(--sh-md);
+      cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;
+      color:var(--text);transition:transform .1s;
+    }
+    .fab-option:active{transform:scale(.97);}
+    .fab-option-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;}
+    .fab-main{
+      width:52px;height:52px;border-radius:50%;
+      background:var(--gold);box-shadow:0 4px 16px rgba(201,169,110,.4);
+      border:none;color:#FFF;font-size:26px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:transform .2s,background .2s;
+    }
+    .fab-main.open{transform:rotate(45deg);background:var(--text);}
+    /* ── INVESTMENTS ── */
+    .inv-banner{
+      margin:16px 20px 0;
+      background:linear-gradient(135deg,#8BA89E 0%,#6A8880 100%);
+      border-radius:var(--r);padding:18px 20px;
+      box-shadow:0 4px 16px rgba(107,136,128,.25);
+    }
+    .inv-banner-tag{font-size:10px;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.8px;}
+    .inv-banner-value{font-size:28px;font-weight:700;color:#FFF;margin:4px 0 2px;}
+    .inv-banner-sub{font-size:12px;color:rgba(255,255,255,.75);}
+    .inv-list{padding:0 20px;margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+    .inv-item{
+      background:var(--surface);border-radius:var(--r-sm);
+      padding:13px 14px;box-shadow:var(--sh);
+      display:flex;align-items:center;gap:12px;position:relative;
+    }
+    .inv-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+    .inv-info{flex:1;min-width:0;}
+    .inv-desc{font-size:13px;font-weight:500;}
+    .inv-meta{font-size:11px;color:var(--text-mid);margin-top:2px;}
+    .inv-type-badge{font-size:10px;padding:2px 7px;border-radius:8px;font-weight:500;}
+    .inv-amount{font-size:15px;font-weight:600;color:#6A8880;flex-shrink:0;}
+    .inv-delete{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--text-light);font-size:13px;cursor:pointer;padding:2px 4px;}
+  </style>
+</head>
+<body>
+
+<div id="app-shell">
+  <div id="app"></div>
+</div>
+<div id="modal-overlay" class="modal-overlay hidden"></div>
+<div id="bottom-sheet" class="bottom-sheet hidden"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DEFAULTS
+// ═══════════════════════════════════════════════════════════
+const DEFAULT_CATEGORIES = [
+  { id:'cat_food',      name:'Alimentação',    color:'#E8A598', icon:'🍽️' },
+  { id:'cat_beauty',    name:'Saúde & Beleza', color:'#B8857A', icon:'💄' },
+  { id:'cat_clothes',   name:'Vestuário',      color:'#C9A96E', icon:'👗' },
+  { id:'cat_edu',       name:'Educação',       color:'#8BA89E', icon:'📚' },
+  { id:'cat_leisure',   name:'Lazer',          color:'#9B8EC4', icon:'🎭' },
+  { id:'cat_home',      name:'Casa',           color:'#A8B89E', icon:'🏠' },
+  { id:'cat_transport', name:'Transporte',     color:'#8EA8B8', icon:'🚗' },
+  { id:'cat_pj',        name:'Clínica (PJ)',   color:'#D4854A', icon:'🏥' },
+  { id:'cat_other',     name:'Outros',         color:'#A8A8A8', icon:'📦' },
+];
+const CARD_COLORS = ['#C9A96E','#B8857A','#8BA89E','#9B8EC4','#8EA8B8','#6E8EC9','#A8B89E','#C4A87A'];
+
+const PAYMENT_METHODS = [
+  { id:'credito',  icon:'💳', label:'Crédito'  },
+  { id:'debito',   icon:'🏧', label:'Débito'   },
+  { id:'pix',      icon:'🔷', label:'PIX'      },
+  { id:'dinheiro', icon:'💵', label:'Dinheiro' },
+  { id:'transfer', icon:'🏦', label:'Transf.'  },
+];
+const INSTALLMENT_OPTIONS = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+const DEFAULT_INCOME_CATEGORIES = [
+  { id:'inc_prolabore', name:'Pró-labore',      color:'#5A9E8A', icon:'💼' },
+  { id:'inc_clinica',   name:'Receita Clínica', color:'#D4854A', icon:'🏥' },
+  { id:'inc_servicos',  name:'Serviços',         color:'#8BA89E', icon:'🔧' },
+  { id:'inc_transfer',  name:'Transferência',    color:'#9B8EC4', icon:'🏦' },
+  { id:'inc_invest',    name:'Resgate Invest.',  color:'#C9A96E', icon:'📊' },
+  { id:'inc_outros',    name:'Outros',           color:'#A8A8A8', icon:'📦' },
+];
+
+const INVESTMENT_TYPES = [
+  { id:'renda_fixa', label:'Renda Fixa', icon:'🏦', color:'#8BA89E' },
+  { id:'acoes',      label:'Ações',      icon:'📈', color:'#9B8EC4' },
+  { id:'fii',        label:'FII',        icon:'🏢', color:'#C9A96E' },
+  { id:'cripto',     label:'Cripto',     icon:'₿',  color:'#E8A598' },
+  { id:'poupanca',   label:'Poupança',   icon:'💰', color:'#A8B89E' },
+  { id:'outro',      label:'Outro',      icon:'📦', color:'#A8A8A8' },
+];
+
+function pmBadge(method, pixAccount){
+  if(!method||method==='credito') return '';
+  const p=PAYMENT_METHODS.find(m=>m.id===method);
+  if(!p) return '';
+  const extra=(method==='pix'&&pixAccount)?` · ${pixAccount}`:'';
+  return `<span class="pm-badge">${p.icon} ${p.label}${extra}</span>`;
+}
+
+function addMonths(dateStr, n){
+  const [y,m,d]=dateStr.split('-').map(Number);
+  const dt=new Date(y, m-1+n, d);
+  return dt.toISOString().slice(0,10);
+}
+
+function monthRange(startDate, n){
+  const [sy,sm]=startDate.split('-').map(Number);
+  const end=new Date(sy, sm-1+n-1, 1);
+  const endStr=end.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+  const startStr=new Date(sy,sm-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'});
+  return `${startStr} → ${endStr}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let state = { expenses:[], cards:[], categories:[...DEFAULT_CATEGORIES], investments:[], incomes:[], incomeCategories:[...DEFAULT_INCOME_CATEGORIES], fixedExpenses:[], fixedPayments:{} };
+let fabOpen = false;
+let currentView = 'dashboard';
+let filterCard = null;
+let reportYear = new Date().getFullYear();
+let filterCategory = null;
+let showOnlyPJ = false;
+let viewMonth = new Date().toISOString().slice(0,7);
+let chartInstance = null;
+let editingExpenseId = null;
+
+// ═══════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════
+function loadState(){
+  try{
+    const s = localStorage.getItem('soraia_fin_v1');
+    if(s){
+      const p = JSON.parse(s);
+      state = { ...state, ...p };
+      if(!state.investments) state.investments=[];
+      if(!state.incomes) state.incomes=[];
+      if(!state.fixedExpenses) state.fixedExpenses=[];
+      if(!state.fixedPayments) state.fixedPayments={};
+      if(!state.incomeCategories) state.incomeCategories=[...DEFAULT_INCOME_CATEGORIES];
+      DEFAULT_CATEGORIES.forEach(dc=>{
+        if(!state.categories.find(c=>c.id===dc.id)) state.categories.push(dc);
+      });
+    }
+  }catch(e){}
+}
+function saveState(){ localStorage.setItem('soraia_fin_v1', JSON.stringify(state)); }
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function fmt(n){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n||0); }
+function fmtDate(d){ return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}); }
+function monthKey(d){ return d.slice(0,7); }
+function monthName(k){
+  const [y,m]=k.split('-');
+  return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+function monthExpenses(){ return state.expenses.filter(e=>monthKey(e.date)===viewMonth); }
+function getCat(id){ return state.categories.find(c=>c.id===id)||{name:'Outros',color:'#A8A8A8',icon:'📦'}; }
+function getCard(id){ return state.cards.find(c=>c.id===id); }
+
+function prevMonth(){
+  const [y,m]=viewMonth.split('-').map(Number);
+  const d=new Date(y,m-2,1); viewMonth=d.toISOString().slice(0,7); renderApp();
+}
+function nextMonth(){
+  const [y,m]=viewMonth.split('-').map(Number);
+  const d=new Date(y,m,1); viewMonth=d.toISOString().slice(0,7); renderApp();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════
+function openSheet(html){
+  const ov=document.getElementById('modal-overlay');
+  const bs=document.getElementById('bottom-sheet');
+  bs.innerHTML=html; bs.classList.remove('hidden');
+  ov.classList.remove('hidden');
+  requestAnimationFrame(()=>{
+    bs.classList.add('open');
+    ov.classList.add('visible');
+  });
+}
+function closeModal(){
+  const ov=document.getElementById('modal-overlay');
+  const bs=document.getElementById('bottom-sheet');
+  bs.classList.remove('open');
+  ov.classList.remove('visible');
+  setTimeout(()=>{ bs.classList.add('hidden'); ov.classList.add('hidden'); },280);
+  editingExpenseId=null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER ENGINE
+// ═══════════════════════════════════════════════════════════
+function renderApp(){
+  const app=document.getElementById('app');
+  const views={ dashboard:renderDashboard, incomes:renderIncomes, expenses:renderExpenses, cards:renderCards, pj:renderPJ, reports:renderReports };
+  const navHTML=`
+  <nav class="bottom-nav">
+    ${navItem('dashboard','dashboard',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,'Início')}
+    ${navItem('incomes','incomes-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`,'Entradas')}
+    ${navItem('expenses','expenses',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12h6M9 16h4"/></svg>`,'Gastos')}
+    ${navItem('cards','cards',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>`,'Cartões')}
+    ${navItem('pj','pj-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,'Clínica')}
+    ${navItem('reports','reports-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><path d="M12 12L12 6"/><path d="M12 12L17 14.5"/><path d="M12 12L7.5 16"/></svg>`,'Visão')}
+  </nav>`;
+
+  app.innerHTML=(views[currentView]||renderDashboard)()+navHTML;
+
+  // Post-render hooks
+  if(currentView==='dashboard') renderChart();
+  if(currentView==='reports') renderReportsChart();
+}
+
+function navItem(view,extraClass,icon,label){
+  const active=currentView===view?'active':'';
+  return `<button class="nav-item ${extraClass} ${active}" onclick="navigate('${view}')">${icon}<span>${label}</span></button>`;
+}
+function navigate(v){ currentView=v; filterCard=null; filterCategory=null; showOnlyPJ=false; renderApp(); }
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDashboard(){
+  const mes=monthExpenses();
+  const totalPJ=mes.filter(e=>e.isPJ).reduce((s,e)=>s+e.amount,0);
+  const totalPessoal=mes.filter(e=>!e.isPJ).reduce((s,e)=>s+e.amount,0);
+  const total=mes.reduce((s,e)=>s+e.amount,0);
+  const totalIncome=state.incomes.filter(i=>monthKey(i.date)===viewMonth).reduce((s,i)=>s+i.amount,0);
+  const balance=totalIncome-total;
+
+  const recent=mes.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4);
+
+  const pjBannerClass=totalPJ===0?'pj-banner-zero':'';
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div><div class="header h1">Soraia · Financeiro</div><div class="subtitle">Controle Pessoal & Clínica</div></div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <div class="month-name">${monthName(viewMonth)}</div>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card" style="border-left:3px solid var(--income)">
+        <div class="sc-label">↑ Entradas</div>
+        <div class="sc-value" style="font-size:16px;color:var(--income)">${fmt(totalIncome)}</div>
+      </div>
+      <div class="summary-card">
+        <div class="sc-label">↓ Gastos</div>
+        <div class="sc-value" style="font-size:16px">${fmt(total)}</div>
+      </div>
+    </div>
+    <div class="balance-row">
+      <div class="balance-row-label">Saldo do mês</div>
+      <div class="balance-row-value ${balance>=0?'balance-positive':'balance-negative'}">${balance>=0?'+':''}${fmt(balance)}</div>
+    </div>
+
+    <div class="pj-banner ${pjBannerClass}" onclick="navigate('pj')">
+      <div class="pj-banner-left">
+        <div class="pj-banner-tag">💼 Investimentos na Clínica</div>
+        <div class="pj-banner-label">Aportes PF → PJ este mês</div>
+        <div class="pj-banner-value">${fmt(totalPJ)}</div>
+      </div>
+      <div class="pj-banner-arrow">›</div>
+    </div>
+
+    <div class="chart-section">
+      <div class="chart-title">Gastos por Categoria</div>
+      ${mes.length===0
+        ? '<div style="text-align:center;padding:30px 0;color:var(--text-light);font-size:13px;">Nenhum gasto este mês</div>'
+        : `<div class="chart-wrap"><canvas id="donut-chart"></canvas><div class="chart-center"><div class="chart-center-value">${fmt(total)}</div><div class="chart-center-label">total</div></div></div><div class="chart-legend" id="chart-legend"></div>`
+      }
+    </div>
+
+    ${recent.length>0?`
+    <div class="section">
+      <div class="section-title">Lançamentos Recentes</div>
+    </div>
+    <div class="recent-list">
+      ${recent.map(e=>{
+        const cat=getCat(e.categoryId);
+        const card=getCard(e.cardId);
+        return `<div class="recent-item">
+          <div class="recent-dot" style="background:${cat.color}20">${cat.icon}</div>
+          <div class="recent-info">
+            <div class="recent-desc">${e.desc||'Sem descrição'}</div>
+            <div class="recent-meta">${fmtDate(e.date)}${card?` · <span style="color:${card.color}">${card.name}</span>`:''}${e.installments>1?` · <span style="color:var(--text-mid)">${e.installmentNum}/${e.installments}x</span>`:''}${e.isPJ?' · <span style="color:var(--pj)">🏥 PJ</span>':''}</div>
+          </div>
+          <div class="recent-amount ${e.isPJ?'pj':''}">${fmt(e.amount)}</div>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    <div style="height:16px"></div>
+  </div>
+  ${renderFab()}`;
+}
+
+function renderChart(){
+  const canvas=document.getElementById('donut-chart');
+  if(!canvas) return;
+  const mes=monthExpenses();
+  if(!mes.length) return;
+
+  // Aggregate by category
+  const map={};
+  mes.forEach(e=>{
+    map[e.categoryId]=(map[e.categoryId]||0)+e.amount;
+  });
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const top5=sorted.slice(0,5);
+  const otherSum=sorted.slice(5).reduce((s,e)=>s+e[1],0);
+  if(otherSum>0) top5.push(['cat_other',otherSum]);
+
+  const total=mes.reduce((s,e)=>s+e.amount,0);
+  const labels=top5.map(([id])=>getCat(id).name);
+  const data=top5.map(([,v])=>v);
+  const colors=top5.map(([id])=>getCat(id).color);
+
+  if(chartInstance) chartInstance.destroy();
+  chartInstance=new Chart(canvas,{
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, hoverOffset:4 }] },
+    options:{
+      cutout:'70%',responsive:true,maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{
+        callbacks:{
+          label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/total)*100).toFixed(0)}%)`
+        }
+      }}
+    }
+  });
+
+  const legend=document.getElementById('chart-legend');
+  if(legend){
+    legend.innerHTML=top5.map(([id,val])=>{
+      const cat=getCat(id);
+      const pct=((val/total)*100).toFixed(0);
+      return `<div class="legend-item">
+        <div class="legend-dot" style="background:${cat.color}"></div>
+        <div class="legend-name">${cat.icon} ${cat.name}</div>
+        <div class="legend-value">${fmt(val)}</div>
+        <div class="legend-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// EXPENSES
+// ═══════════════════════════════════════════════════════════
+function renderExpenses(){
+  let list=monthExpenses().sort((a,b)=>b.date.localeCompare(a.date));
+  if(filterCard) list=list.filter(e=>e.cardId===filterCard);
+  if(filterCategory) list=list.filter(e=>e.categoryId===filterCategory);
+  if(showOnlyPJ) list=list.filter(e=>e.isPJ);
+
+  const cardFilters=state.cards.map(c=>`
+    <button class="filter-chip ${filterCard===c.id?'active':''}" style="${filterCard===c.id?`background:${c.color};border-color:${c.color}`:'color:'+c.color+';border-color:'+c.color}" onclick="setFilterCard('${c.id}')">
+      ${c.name} ****${c.lastFour}
+    </button>`).join('');
+
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div><div class="header h1" style="font-size:17px">Lançamentos</div></div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <div class="month-name">${monthName(viewMonth)}</div>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+
+    ${renderFixedSection()}
+
+    <div class="filter-bar">
+      <button class="filter-chip ${!filterCard&&!filterCategory&&!showOnlyPJ?'active':''}" onclick="clearFilters()">Todos</button>
+      <button class="filter-chip pj-chip ${showOnlyPJ?'active':''}" onclick="togglePJFilter()">💼 Clínica PJ</button>
+      ${cardFilters}
+    </div>
+
+    <div class="expense-list">
+      ${list.length===0
+        ? `<div class="empty-state"><div class="icon">📋</div><p>Nenhum lançamento aqui.<br>Toque em + para adicionar.</p></div>`
+        : list.map(e=>{
+            const cat=getCat(e.categoryId);
+            const card=getCard(e.cardId);
+            return `<div class="expense-item ${e.isPJ?'is-pj':''}">
+              <div class="cat-dot" style="background:${cat.color}20">${cat.icon}</div>
+              <div class="expense-info">
+                <div class="expense-desc">${e.desc||'Sem descrição'}</div>
+                <div class="expense-meta">
+                  <span class="expense-date">${fmtDate(e.date)}</span>
+                  ${card?`<span class="card-chip" style="background:${card.color}">${card.name}</span>`:''}
+                  ${e.installments>1?`<span class="inst-badge">${e.installmentNum}/${e.installments}</span>`:''}
+                  ${pmBadge(e.paymentMethod, e.pixAccount)}
+                  ${e.isPJ?`<span class="pj-badge">🏥 Clínica PJ</span>`:''}
+                </div>
+              </div>
+              <div class="expense-right">
+                <div class="expense-amount ${e.isPJ?'pj':''}">${fmt(e.amount)}</div>
+              </div>
+              <button class="expense-delete" onclick="deleteExpense('${e.id}')">✕</button>
+            </div>`;
+          }).join('')
+      }
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  ${renderFab()}`;
+}
+
+function setFilterCard(id){
+  filterCard=filterCard===id?null:id;
+  filterCategory=null; showOnlyPJ=false; renderApp();
+}
+function clearFilters(){ filterCard=null; filterCategory=null; showOnlyPJ=false; renderApp(); }
+function togglePJFilter(){ showOnlyPJ=!showOnlyPJ; filterCard=null; filterCategory=null; renderApp(); }
+
+// ═══════════════════════════════════════════════════════════
+// CARDS
+// ═══════════════════════════════════════════════════════════
+function renderCards(){
+  const mes=monthExpenses();
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div><div class="header h1" style="font-size:17px">Meus Cartões</div></div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <div class="month-name">${monthName(viewMonth)}</div>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+    <div style="height:16px"></div>
+    <div class="cards-list">
+      ${state.cards.length===0
+        ? `<div class="empty-state"><div class="icon">💳</div><p>Nenhum cartão cadastrado ainda.</p></div>`
+        : state.cards.map(card=>{
+            const total=mes.filter(e=>e.cardId===card.id).reduce((s,e)=>s+e.amount,0);
+            return `<div class="credit-card" style="--card-color:${card.color}">
+              <div class="card-brand">${card.brand||'Cartão'}</div>
+              <div class="card-number">•••• •••• •••• ${card.lastFour}</div>
+              <div class="card-name">${card.name}</div>
+              <div class="card-total">
+                <div class="card-total-label">FATURA ${monthName(viewMonth).toUpperCase()}</div>
+                <div class="card-total-value">${fmt(total)}</div>
+              </div>
+              <div class="card-actions">
+                <button class="card-delete-btn" onclick="deleteCard('${card.id}')">Remover</button>
+              </div>
+            </div>`;
+          }).join('')
+      }
+    </div>
+    <div style="height:16px"></div>
+    <button class="add-card-btn" onclick="openAddCard()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Adicionar Cartão
+    </button>
+    <div style="height:16px"></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PJ VIEW
+// ═══════════════════════════════════════════════════════════
+function renderPJ(){
+  const allPJ=state.expenses.filter(e=>e.isPJ).sort((a,b)=>b.date.localeCompare(a.date));
+  const yearPJ=allPJ.filter(e=>e.date.startsWith(viewMonth.slice(0,4)));
+  const yearTotal=yearPJ.reduce((s,e)=>s+e.amount,0);
+  const monthPJ=allPJ.filter(e=>monthKey(e.date)===viewMonth);
+  const monthTotal=monthPJ.reduce((s,e)=>s+e.amount,0);
+
+  // Group by month
+  const byMonth={};
+  allPJ.forEach(e=>{
+    const k=monthKey(e.date);
+    if(!byMonth[k]) byMonth[k]=[];
+    byMonth[k].push(e);
+  });
+  const months=Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header h1" style="font-size:17px">Investimentos na Clínica</div>
+          <div class="subtitle">Aportes PF → PJ</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pj-year-banner">
+      <div class="pj-year-label">💼 Total Acumulado ${viewMonth.slice(0,4)}</div>
+      <div class="pj-year-value">${fmt(yearTotal)}</div>
+      <div class="pj-year-sub">${yearPJ.length} lançamento${yearPJ.length!==1?'s':''} no ano · ${fmt(monthTotal)} este mês</div>
+    </div>
+
+    ${months.length===0
+      ? `<div class="empty-state"><div class="icon">🏥</div><p>Nenhum investimento registrado ainda.<br>Marque "Gasto da Clínica" ao lançar.</p></div>`
+      : months.map(mk=>{
+          const itens=byMonth[mk];
+          const tot=itens.reduce((s,e)=>s+e.amount,0);
+          return `<div class="pj-month-group">
+            <div class="pj-month-header">
+              <div class="pj-month-name" style="text-transform:capitalize">${monthName(mk)}</div>
+              <div class="pj-month-total">${fmt(tot)}</div>
+            </div>
+            <div class="expense-list" style="padding:0">
+              ${itens.map(e=>{
+                const cat=getCat(e.categoryId);
+                const card=getCard(e.cardId);
+                return `<div class="expense-item is-pj">
+                  <div class="cat-dot" style="background:${cat.color}20">${cat.icon}</div>
+                  <div class="expense-info">
+                    <div class="expense-desc">${e.desc||'Sem descrição'}</div>
+                    <div class="expense-meta">
+                      <span class="expense-date">${fmtDate(e.date)}</span>
+                      ${card?`<span class="card-chip" style="background:${card.color}">${card.name}</span>`:''}
+                      ${e.installments>1?`<span class="inst-badge">${e.installmentNum}/${e.installments}</span>`:''}
+                      ${pmBadge(e.paymentMethod, e.pixAccount)}
+                    </div>
+                  </div>
+                  <div class="expense-amount pj">${fmt(e.amount)}</div>
+                  <button class="expense-delete" onclick="deleteExpense('${e.id}')">✕</button>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('')
+    }
+
+    ${allPJ.length>0?`
+    <button class="copy-btn" onclick="copyPJReport()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+      Copiar Relatório
+    </button>`:''}
+
+    <div style="height:16px"></div>
+  </div>
+  ${renderFab()}`;
+}
+
+function copyPJReport(){
+  const allPJ=state.expenses.filter(e=>e.isPJ).sort((a,b)=>b.date.localeCompare(a.date));
+  const byMonth={};
+  allPJ.forEach(e=>{ const k=monthKey(e.date); if(!byMonth[k]) byMonth[k]=[]; byMonth[k].push(e); });
+  let txt='INVESTIMENTOS NA CLÍNICA — Soraia Abraão\n';
+  txt+='='.repeat(40)+'\n\n';
+  Object.keys(byMonth).sort((a,b)=>b.localeCompare(a)).forEach(mk=>{
+    const itens=byMonth[mk];
+    const tot=itens.reduce((s,e)=>s+e.amount,0);
+    txt+=`📅 ${monthName(mk).toUpperCase()}\n`;
+    itens.forEach(e=>{ txt+=`  ${fmtDate(e.date)}  ${(e.desc||'Sem descrição').padEnd(25)} ${fmt(e.amount)}\n`; });
+    txt+=`  TOTAL: ${fmt(tot)}\n\n`;
+  });
+  const total=allPJ.reduce((s,e)=>s+e.amount,0);
+  txt+=`TOTAL GERAL: ${fmt(total)}`;
+  navigator.clipboard.writeText(txt).then(()=>showToast('✅ Relatório copiado!')).catch(()=>showToast('Copie o texto acima'));
+}
+
+// ═══════════════════════════════════════════════════════════
+// FORMS
+// ═══════════════════════════════════════════════════════════
+function openAddExpense(forcePJ=false){
+  const today=new Date().toISOString().slice(0,10);
+  const catOptions=state.categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  const cardOptions=state.cards.map(c=>`<option value="${c.id}">${c.name} ****${c.lastFour}</option>`).join('');
+
+  const pmPills=PAYMENT_METHODS.map(p=>`
+    <button class="pm-pill ${p.id==='credito'?'active':''}" id="pm-${p.id}" type="button" onclick="onPaymentMethodChange('${p.id}')">
+      ${p.icon}<br>${p.label}
+    </button>`).join('');
+
+  const instChips=INSTALLMENT_OPTIONS.map(n=>`
+    <button class="inst-chip ${n===1?'active':''}" id="inst-${n}" type="button" onclick="selectInstallment(${n})">${n}x</button>
+  `).join('');
+
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Novo Lançamento</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Valor total (R$)</label>
+      <input id="f-amount" class="form-input" type="number" inputmode="decimal" placeholder="0,00" step="0.01" min="0" oninput="updateInstallmentPreview()" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input id="f-desc" class="form-input" type="text" placeholder="Ex: Farmácia, Almoço...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Forma de Pagamento</label>
+      <div class="payment-methods">${pmPills}</div>
+    </div>
+
+    <div id="section-card" class="slide-section" style="max-height:120px;opacity:1">
+      <div class="form-group">
+        <label class="form-label">Cartão</label>
+        <select id="f-card" class="form-select">
+          <option value="">Sem cartão vinculado</option>
+          ${cardOptions}
+        </select>
+      </div>
+    </div>
+
+    <div id="section-pix" class="slide-section hidden-section" style="max-height:80px">
+      <div class="form-group">
+        <label class="form-label">Conta de origem do PIX</label>
+        <input id="f-pix-account" class="form-input" type="text" placeholder="Ex: Nubank, Itaú, Caixa...">
+      </div>
+    </div>
+
+    <div id="section-installments" class="slide-section" style="max-height:160px;opacity:1">
+      <div class="form-group">
+        <label class="form-label">Parcelas</label>
+        <div class="installment-row">${instChips}</div>
+        <div id="inst-preview" class="inst-preview" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select id="f-cat" class="form-select">${catOptions}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">1ª cobrança</label>
+        <input id="f-date" class="form-input" type="date" value="${today}" onchange="updateInstallmentPreview()">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <button id="pj-btn" class="pj-toggle ${forcePJ?'on':''}" type="button" onclick="togglePJBtn()">
+        <span class="pj-toggle-icon">🏥</span>
+        <span class="pj-toggle-text">
+          Gasto da Clínica (PJ)
+          <span class="pj-toggle-sub">Marque se este valor é investimento PF → PJ</span>
+        </span>
+        <span class="toggle-indicator"></span>
+      </button>
+    </div>
+    <div class="form-group">
+      <button id="fixed-btn" class="fixed-toggle" type="button" onclick="toggleFixedBtn()">
+        <span style="font-size:18px">🔄</span>
+        <span style="flex:1">
+          Gasto Fixo Mensal
+          <span class="pj-toggle-sub">Repete todo mês — aparece para dar check de pago</span>
+        </span>
+        <span class="toggle-indicator"></span>
+      </button>
+    </div>
+    <div id="section-day" class="slide-section hidden-section" style="max-height:80px">
+      <div class="form-group">
+        <label class="form-label">Dia de vencimento</label>
+        <input id="f-day" class="form-input" type="number" inputmode="numeric" min="1" max="31" placeholder="Ex: 10">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="submitExpense()">Salvar Lançamento</button>
+  </div>`);
+
+  if(forcePJ) document.getElementById('f-cat').value='cat_pj';
+  // Init: credito is default — show card + installments
+  onPaymentMethodChange('credito');
+}
+
+function togglePJBtn(){
+  const btn=document.getElementById('pj-btn');
+  btn.classList.toggle('on');
+  if(btn.classList.contains('on')) document.getElementById('f-cat').value='cat_pj';
+}
+
+function onPaymentMethodChange(method){
+  PAYMENT_METHODS.forEach(p=>{
+    const el=document.getElementById('pm-'+p.id);
+    if(el) el.classList.toggle('active', p.id===method);
+  });
+  const cardSection=document.getElementById('section-card');
+  const instSection=document.getElementById('section-installments');
+  const pixSection=document.getElementById('section-pix');
+  const showCard=method==='credito'||method==='debito';
+  const showInst=method==='credito';
+  const showPix=method==='pix';
+  if(cardSection) cardSection.classList.toggle('hidden-section',!showCard);
+  if(instSection) instSection.classList.toggle('hidden-section',!showInst);
+  if(pixSection) pixSection.classList.toggle('hidden-section',!showPix);
+  // Reset to 1x when switching away from crédito
+  if(!showInst) selectInstallment(1);
+  updateInstallmentPreview();
+}
+
+function selectInstallment(n){
+  INSTALLMENT_OPTIONS.forEach(i=>{
+    const el=document.getElementById('inst-'+i);
+    if(el) el.classList.toggle('active', i===n);
+  });
+  updateInstallmentPreview();
+}
+
+function getSelectedInstallments(){
+  return INSTALLMENT_OPTIONS.find(n=>document.getElementById('inst-'+n)?.classList.contains('active'))||1;
+}
+
+function updateInstallmentPreview(){
+  const preview=document.getElementById('inst-preview');
+  if(!preview) return;
+  const n=getSelectedInstallments();
+  const amount=parseFloat(document.getElementById('f-amount')?.value)||0;
+  const date=document.getElementById('f-date')?.value;
+  if(n<=1||!amount){ preview.style.display='none'; return; }
+  const parcela=amount/n;
+  const range=date?monthRange(date,n):'';
+  preview.style.display='block';
+  preview.innerHTML=`<strong>${fmt(parcela)} × ${n}x</strong>${range?`<span style="color:var(--text-mid)">${range}</span>`:''}`;
+}
+
+function submitExpense(){
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const desc=document.getElementById('f-desc').value.trim();
+  const catId=document.getElementById('f-cat').value;
+  const date=document.getElementById('f-date').value;
+  const cardEl=document.getElementById('f-card');
+  const cardId=cardEl?cardEl.value:'';
+  const isPJ=document.getElementById('pj-btn').classList.contains('on');
+  const activeMethod=PAYMENT_METHODS.find(p=>document.getElementById('pm-'+p.id)?.classList.contains('active'));
+  const paymentMethod=activeMethod?activeMethod.id:'credito';
+  const pixAccount=paymentMethod==='pix'?(document.getElementById('f-pix-account')?.value.trim()||''):'';
+  const installments=getSelectedInstallments();
+
+  const isFixed=document.getElementById('fixed-btn')?.classList.contains('on')||false;
+  const dayOfMonth=parseInt(document.getElementById('f-day')?.value)||null;
+
+  if(!amount||amount<=0){ showToast('⚠️ Informe um valor válido'); return; }
+  if(!date&&!isFixed){ showToast('⚠️ Informe a data'); return; }
+
+  // Save as recurring fixed expense template
+  if(isFixed){
+    state.fixedExpenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, isPJ, paymentMethod, pixAccount, dayOfMonth });
+    saveState(); closeModal(); renderApp();
+    showToast('🔄 Gasto fixo cadastrado!');
+    return;
+  }
+
+  if(installments>1){
+    const group=uid();
+    const parcela=Math.round((amount/installments)*100)/100;
+    // last installment absorbs rounding difference
+    for(let i=0;i<installments;i++){
+      const parcelaAmount=i===installments-1
+        ? Math.round((amount-parcela*(installments-1))*100)/100
+        : parcela;
+      state.expenses.push({
+        id:uid(), amount:parcelaAmount, desc, categoryId:catId,
+        cardId, date:addMonths(date,i), isPJ, paymentMethod, pixAccount,
+        installments, installmentNum:i+1, installmentGroup:group,
+      });
+    }
+    saveState(); closeModal(); renderApp();
+    showToast(`✅ ${installments}x lançado${installments!==1?'s':''}!`);
+  } else {
+    state.expenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, date, isPJ, paymentMethod, pixAccount, installments:1 });
+    saveState(); closeModal(); renderApp();
+    showToast('✅ Lançamento salvo!');
+  }
+}
+
+function deleteExpense(id){
+  const exp=state.expenses.find(e=>e.id===id);
+  if(!exp) return;
+  if(exp.installmentGroup){
+    const siblings=state.expenses.filter(e=>e.installmentGroup===exp.installmentGroup);
+    const remaining=siblings.filter(e=>e.date>=exp.date);
+    if(remaining.length>1){
+      const choice=confirm(
+        `Parcelamento em ${exp.installments}x.\n\nRemover TODAS as ${remaining.length} parcela(s) restantes (${exp.installmentNum}/${exp.installments} em diante)?\n\n[OK] = Remover restantes\n[Cancelar] = Só esta parcela`
+      );
+      if(choice){
+        const ids=new Set(remaining.map(e=>e.id));
+        state.expenses=state.expenses.filter(e=>!ids.has(e.id));
+        saveState(); renderApp(); showToast(`🗑️ ${ids.size} parcela(s) removida(s)`);
+        return;
+      }
+    }
+  }
+  if(!exp.installmentGroup&&!confirm('Remover este lançamento?')) return;
+  state.expenses=state.expenses.filter(e=>e.id!==id);
+  saveState(); renderApp();
+}
+
+function openAddCard(){
+  let selectedColor=CARD_COLORS[0];
+  const swatches=CARD_COLORS.map((c,i)=>`
+    <div class="color-swatch ${i===0?'selected':''}" style="background:${c}" onclick="selectCardColor('${c}',this)" data-color="${c}"></div>
+  `).join('');
+
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Novo Cartão</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Nome do Cartão</label>
+      <input id="c-name" class="form-input" type="text" placeholder="Ex: Nubank, Itaú Platinum...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Bandeira</label>
+        <select id="c-brand" class="form-select">
+          <option>Visa</option><option>Mastercard</option>
+          <option>Elo</option><option>Amex</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Últimos 4 dígitos</label>
+        <input id="c-last4" class="form-input" type="text" inputmode="numeric" maxlength="4" placeholder="0000">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cor do Cartão</label>
+      <div class="color-picker" id="card-color-picker">${swatches}</div>
+    </div>
+    <button class="btn btn-primary" onclick="submitCard()">Adicionar Cartão</button>
+  </div>`);
+}
+
+function selectCardColor(color, el){
+  document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  el.closest('.bottom-sheet')._selectedColor=color;
+}
+
+function submitCard(){
+  const name=document.getElementById('c-name').value.trim();
+  const brand=document.getElementById('c-brand').value;
+  const lastFour=document.getElementById('c-last4').value.trim();
+  const picked=document.querySelector('.color-swatch.selected');
+  const color=picked?picked.dataset.color:CARD_COLORS[0];
+
+  if(!name){ showToast('⚠️ Informe o nome do cartão'); return; }
+  if(!lastFour||lastFour.length!==4){ showToast('⚠️ Informe os 4 últimos dígitos'); return; }
+
+  state.cards.push({ id:uid(), name, brand, lastFour, color });
+  saveState(); closeModal(); renderApp();
+  showToast('✅ Cartão adicionado!');
+}
+
+function deleteCard(id){
+  if(!confirm('Remover este cartão? Os lançamentos serão mantidos.')) return;
+  state.cards=state.cards.filter(c=>c.id!==id);
+  saveState(); renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FIXED EXPENSES
+// ═══════════════════════════════════════════════════════════
+function fixedKey(fixedId, month){ return `${fixedId}|${month}`; }
+
+function renderFixedSection(){
+  if(!state.fixedExpenses.length) return '';
+  const totalFixed=state.fixedExpenses.reduce((s,f)=>s+f.amount,0);
+  const paidCount=state.fixedExpenses.filter(f=>state.fixedPayments[fixedKey(f.id,viewMonth)]?.paid).length;
+
+  const items=state.fixedExpenses.map(f=>{
+    const k=fixedKey(f.id,viewMonth);
+    const paid=!!state.fixedPayments[k]?.paid;
+    const cat=getCat(f.categoryId);
+    const card=getCard(f.cardId);
+    return `<div class="fixed-item ${paid?'paid':''}">
+      <div class="fixed-check ${paid?'checked':''}" onclick="toggleFixedPaid('${f.id}')">
+        ${paid?'✓':''}
+      </div>
+      <div class="fixed-info">
+        <div class="fixed-desc">${f.desc||'Sem descrição'}</div>
+        <div class="fixed-meta">
+          ${cat.icon} ${cat.name}
+          ${card?`· <span style="color:${card.color}">${card.name}</span>`:''}
+          ${f.dayOfMonth?`· vence dia ${f.dayOfMonth}`:''}
+          · <span class="${paid?'paid-badge':'pending-badge'}">${paid?'✓ Pago':'● Pendente'}</span>
+        </div>
+      </div>
+      <div class="fixed-amount ${paid?'paid-amount':''}">${fmt(f.amount)}</div>
+    </div>`;
+  }).join('');
+
+  return `<div class="fixed-section">
+    <div class="fixed-section-header">
+      <div class="fixed-section-title">🔄 Fixos do Mês — ${paidCount}/${state.fixedExpenses.length} pagos</div>
+      <button class="fixed-manage-btn" onclick="openManageFixed()">Gerenciar</button>
+    </div>
+    ${items}
+    <div style="display:flex;justify-content:space-between;padding:8px 2px 4px;font-size:12px;color:var(--text-mid)">
+      <span>Total fixos: <strong style="color:var(--text)">${fmt(totalFixed)}</strong></span>
+      <span>Pago: <strong style="color:var(--income)">${fmt(state.fixedExpenses.filter(f=>state.fixedPayments[fixedKey(f.id,viewMonth)]?.paid).reduce((s,f)=>s+f.amount,0))}</strong></span>
+    </div>
+  </div>`;
+}
+
+function toggleFixedPaid(fixedId){
+  const k=fixedKey(fixedId,viewMonth);
+  const f=state.fixedExpenses.find(x=>x.id===fixedId);
+  if(!f) return;
+  const current=state.fixedPayments[k];
+
+  if(current?.paid){
+    // Unmark: remove payment and delete generated expense
+    if(current.expenseId){
+      state.expenses=state.expenses.filter(e=>e.id!==current.expenseId);
+    }
+    delete state.fixedPayments[k];
+  } else {
+    // Mark as paid: create expense entry for this month
+    const day=f.dayOfMonth||new Date().getDate();
+    const [y,m]=viewMonth.split('-');
+    const maxDay=new Date(y,m,0).getDate();
+    const date=`${y}-${m}-${String(Math.min(day,maxDay)).padStart(2,'0')}`;
+    const expId=uid();
+    state.expenses.push({
+      id:expId, amount:f.amount, desc:f.desc,
+      categoryId:f.categoryId, cardId:f.cardId,
+      date, isPJ:f.isPJ||false, paymentMethod:f.paymentMethod||'credito',
+      installments:1, fromFixed:fixedId,
+    });
+    state.fixedPayments[k]={ paid:true, expenseId:expId };
+  }
+  saveState(); renderApp();
+}
+
+function openManageFixed(){
+  if(!state.fixedExpenses.length){
+    showToast('Nenhum gasto fixo cadastrado'); return;
+  }
+  const items=state.fixedExpenses.map(f=>{
+    const cat=getCat(f.categoryId);
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--nude)">
+      <div style="font-size:20px">${cat.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:500">${f.desc||'Sem descrição'}</div>
+        <div style="font-size:11px;color:var(--text-mid)">${fmt(f.amount)}${f.dayOfMonth?' · dia '+f.dayOfMonth:''}</div>
+      </div>
+      <button onclick="deleteFixed('${f.id}')" style="background:none;border:none;color:var(--text-light);font-size:18px;cursor:pointer;padding:4px">✕</button>
+    </div>`;
+  }).join('');
+
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Gastos Fixos</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    ${items}
+    <p style="font-size:12px;color:var(--text-mid);margin-top:16px;text-align:center">
+      Para adicionar, use o botão + e ative "Gasto Fixo Mensal".
+    </p>
+  </div>`);
+}
+
+function deleteFixed(id){
+  if(!confirm('Remover este gasto fixo? Os lançamentos já gerados não serão removidos.')) return;
+  state.fixedExpenses=state.fixedExpenses.filter(f=>f.id!==id);
+  // Clean up payment keys
+  Object.keys(state.fixedPayments).forEach(k=>{ if(k.startsWith(id+'|')) delete state.fixedPayments[k]; });
+  saveState();
+  // Re-render manage sheet
+  closeModal();
+  setTimeout(()=>{ renderApp(); if(state.fixedExpenses.length) openManageFixed(); }, 300);
+}
+
+function toggleFixedBtn(){
+  const btn=document.getElementById('fixed-btn');
+  btn.classList.toggle('on');
+  const daySection=document.getElementById('section-day');
+  if(daySection) daySection.classList.toggle('hidden-section', !btn.classList.contains('on'));
+  // Disable installments when fixed
+  const instSection=document.getElementById('section-installments');
+  if(btn.classList.contains('on')&&instSection){
+    instSection.classList.add('hidden-section');
+    selectInstallment(1);
+  } else {
+    const method=PAYMENT_METHODS.find(p=>document.getElementById('pm-'+p.id)?.classList.contains('active'));
+    if(method?.id==='credito'&&instSection) instSection.classList.remove('hidden-section');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// FAB SPEED-DIAL
+// ═══════════════════════════════════════════════════════════
+function renderFab(){
+  return `<div class="fab-menu" id="fab-menu">
+    <div id="fab-options" style="display:${fabOpen?'flex':'none'};flex-direction:column;align-items:flex-end;gap:8px;margin-bottom:4px">
+      <button class="fab-option" onclick="closeFab();openAddIncome()">
+        <div class="fab-option-icon" style="background:var(--income-bg)">💚</div>
+        Registrar Entrada
+      </button>
+      <button class="fab-option" onclick="closeFab();openAddExpense()">
+        <div class="fab-option-icon" style="background:var(--surface2)">💸</div>
+        Registrar Gasto
+      </button>
+    </div>
+    <button class="fab-main ${fabOpen?'open':''}" onclick="toggleFab()">+</button>
+  </div>`;
+}
+function toggleFab(){ fabOpen=!fabOpen; renderApp(); }
+function closeFab(){ fabOpen=false; }
+
+// ═══════════════════════════════════════════════════════════
+// INCOMES VIEW
+// ═══════════════════════════════════════════════════════════
+function getIncomeCat(id){ return state.incomeCategories.find(c=>c.id===id)||{name:'Outros',color:'#5A9E8A',icon:'💰'}; }
+
+function renderIncomes(){
+  const mes=state.incomes.filter(i=>monthKey(i.date)===viewMonth).sort((a,b)=>b.date.localeCompare(a.date));
+  const total=mes.reduce((s,i)=>s+i.amount,0);
+  const totalGastos=monthExpenses().reduce((s,e)=>s+e.amount,0);
+  const balance=total-totalGastos;
+
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div><div class="header h1" style="font-size:17px">Entradas</div></div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <div class="month-name">${monthName(viewMonth)}</div>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="income-banner">
+      <div class="income-banner-tag">💚 Total Recebido</div>
+      <div class="income-banner-value">${fmt(total)}</div>
+      <div class="income-banner-sub">${mes.length} entrada${mes.length!==1?'s':''} · saldo do mês: <strong style="color:#FFF">${balance>=0?'+':''}${fmt(balance)}</strong></div>
+    </div>
+
+    <div class="expense-list" style="padding:16px 20px 0">
+      ${mes.length===0
+        ? `<div class="empty-state"><div class="icon">💚</div><p>Nenhuma entrada este mês.<br>Toque em + para registrar.</p></div>`
+        : mes.map(inc=>{
+            const cat=getIncomeCat(inc.categoryId);
+            return `<div class="expense-item income-item">
+              <div class="cat-dot" style="background:${cat.color}22">${cat.icon}</div>
+              <div class="expense-info">
+                <div class="expense-desc">${inc.desc||cat.name}</div>
+                <div class="expense-meta">
+                  <span class="expense-date">${fmtDate(inc.date)}</span>
+                  <span class="income-badge">↑ Entrada</span>
+                  <span style="font-size:11px;color:var(--text-mid)">${cat.name}</span>
+                </div>
+              </div>
+              <div class="expense-right">
+                <div class="expense-amount income-amount">+${fmt(inc.amount)}</div>
+              </div>
+              <button class="expense-delete" onclick="deleteIncome('${inc.id}')">✕</button>
+            </div>`;
+          }).join('')
+      }
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  ${renderFab()}`;
+}
+
+function openAddIncome(){
+  const today=new Date().toISOString().slice(0,10);
+  const catOptions=state.incomeCategories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+  const pmOptions=PAYMENT_METHODS.filter(p=>['pix','transfer','dinheiro','credito'].includes(p.id))
+    .map(p=>`<option value="${p.id}">${p.icon} ${p.label}</option>`).join('');
+
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" style="color:var(--income)">💚 Nova Entrada</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Valor recebido (R$)</label>
+      <input id="inc-amount" class="form-input" type="number" inputmode="decimal" placeholder="0,00" step="0.01" min="0" autofocus style="border-color:var(--income-border)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input id="inc-desc" class="form-input" type="text" placeholder="Ex: Pró-labore abril, Consulta...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Categoria</label>
+        <select id="inc-cat" class="form-select">${catOptions}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input id="inc-date" class="form-input" type="date" value="${today}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Forma de recebimento</label>
+      <select id="inc-pm" class="form-select">${pmOptions}</select>
+    </div>
+    <button class="btn" style="background:var(--income);color:#FFF" onclick="submitIncome()">Salvar Entrada</button>
+  </div>`);
+}
+
+function submitIncome(){
+  const amount=parseFloat(document.getElementById('inc-amount').value);
+  const desc=document.getElementById('inc-desc').value.trim();
+  const categoryId=document.getElementById('inc-cat').value;
+  const date=document.getElementById('inc-date').value;
+  const paymentMethod=document.getElementById('inc-pm').value;
+  if(!amount||amount<=0){ showToast('⚠️ Informe o valor recebido'); return; }
+  if(!date){ showToast('⚠️ Informe a data'); return; }
+  state.incomes.push({ id:uid(), amount, desc, categoryId, date, paymentMethod });
+  saveState(); closeModal(); renderApp();
+  showToast('💚 Entrada registrada!');
+}
+
+function deleteIncome(id){
+  if(!confirm('Remover esta entrada?')) return;
+  state.incomes=state.incomes.filter(i=>i.id!==id);
+  saveState(); renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// REPORTS + INVESTMENTS
+// ═══════════════════════════════════════════════════════════
+function renderReports(){
+  // Build year list from expenses
+  const years=[...new Set(state.expenses.map(e=>e.date.slice(0,4)))].sort((a,b)=>b-a);
+  if(!years.includes(String(reportYear))&&years.length) reportYear=parseInt(years[0]);
+  if(!years.length) reportYear=new Date().getFullYear();
+  const allYears=[...new Set([...years, String(new Date().getFullYear())])].sort((a,b)=>b-a);
+
+  const yearTabs=allYears.map(y=>`
+    <button class="year-tab ${parseInt(y)===reportYear?'active':''}" onclick="setReportYear(${y})">${y}</button>
+  `).join('')+`<button class="year-tab ${reportYear===0?'active':''}" onclick="setReportYear(0)">Todos</button>`;
+
+  // Investment totals by type
+  const invTotal=state.investments.reduce((s,i)=>s+i.amount,0);
+  const invByType={};
+  state.investments.forEach(i=>{ invByType[i.type]=(invByType[i.type]||0)+i.amount; });
+  const invCount=state.investments.length;
+
+  const typeOptions=INVESTMENT_TYPES.map(t=>`<option value="${t.id}">${t.icon} ${t.label}</option>`).join('');
+
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div>
+          <div class="header h1" style="font-size:17px">Visão Geral</div>
+          <div class="subtitle">Relatórios & Investimentos</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Year filter -->
+    <div class="year-tabs">${yearTabs}</div>
+
+    <!-- Pie chart -->
+    <div class="pie-section">
+      <div class="chart-title">🍕 Gastos por Categoria</div>
+      <div id="reports-empty" style="display:none;text-align:center;padding:30px 0;color:var(--text-light);font-size:13px">Nenhum gasto registrado</div>
+      <div id="reports-chart-area">
+        <div class="pie-wrap"><canvas id="pie-chart"></canvas></div>
+        <div class="cat-table" id="cat-table"></div>
+      </div>
+    </div>
+
+    <!-- Investments -->
+    <div class="inv-banner">
+      <div class="inv-banner-tag">📊 Total Investido</div>
+      <div class="inv-banner-value">${fmt(invTotal)}</div>
+      <div class="inv-banner-sub">${invCount} aplicaç${invCount!==1?'ões':'ão'}${invCount>0?' · '+INVESTMENT_TYPES.filter(t=>invByType[t.id]).map(t=>`${t.icon} ${fmt(invByType[t.id])}`).join(' · '):''}</div>
+    </div>
+
+    <div class="inv-list">
+      ${state.investments.length===0
+        ? `<div class="empty-state" style="padding:32px 0"><div class="icon">📊</div><p>Nenhum investimento ainda.<br>Toque em + para registrar.</p></div>`
+        : state.investments.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(inv=>{
+            const t=INVESTMENT_TYPES.find(x=>x.id===inv.type)||INVESTMENT_TYPES[5];
+            return `<div class="inv-item">
+              <div class="inv-icon" style="background:${t.color}22">${t.icon}</div>
+              <div class="inv-info">
+                <div class="inv-desc">${inv.desc||t.label}</div>
+                <div class="inv-meta">
+                  <span class="inv-type-badge" style="background:${t.color}22;color:${t.color}">${t.label}</span>
+                  · ${inv.institution?inv.institution+' · ':''}${fmtDate(inv.date)}
+                </div>
+              </div>
+              <div class="inv-amount">${fmt(inv.amount)}</div>
+              <button class="inv-delete" onclick="deleteInvestment('${inv.id}')">✕</button>
+            </div>`;
+          }).join('')
+      }
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <button class="fab" style="background:var(--rose);box-shadow:0 4px 16px rgba(184,133,122,.4)" onclick="openAddInvestment()">+</button>`;
+}
+
+let pieChartInstance = null;
+function renderReportsChart(){
+  const canvas=document.getElementById('pie-chart');
+  const tableEl=document.getElementById('cat-table');
+  const emptyEl=document.getElementById('reports-empty');
+  const areaEl=document.getElementById('reports-chart-area');
+  if(!canvas) return;
+
+  let filtered=reportYear===0
+    ? state.expenses
+    : state.expenses.filter(e=>e.date.startsWith(String(reportYear)));
+
+  if(!filtered.length){
+    if(emptyEl) emptyEl.style.display='block';
+    if(areaEl) areaEl.style.display='none';
+    return;
+  }
+  if(emptyEl) emptyEl.style.display='none';
+  if(areaEl) areaEl.style.display='block';
+
+  const map={};
+  filtered.forEach(e=>{ map[e.categoryId]=(map[e.categoryId]||0)+e.amount; });
+  const total=filtered.reduce((s,e)=>s+e.amount,0);
+  const sorted=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+
+  const labels=sorted.map(([id])=>getCat(id).name);
+  const data=sorted.map(([,v])=>v);
+  const colors=sorted.map(([id])=>getCat(id).color);
+
+  if(pieChartInstance) pieChartInstance.destroy();
+  pieChartInstance=new Chart(canvas,{
+    type:'pie',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:2, borderColor:'#FAF8F5', hoverOffset:6 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} (${((ctx.raw/total)*100).toFixed(1)}%)` } }
+      }
+    }
+  });
+
+  if(tableEl){
+    tableEl.innerHTML=sorted.map(([id,val])=>{
+      const cat=getCat(id);
+      const pct=(val/total*100).toFixed(1);
+      return `<div class="cat-row">
+        <div class="cat-row-dot" style="background:${cat.color}"></div>
+        <div class="cat-row-name">${cat.icon} ${cat.name}</div>
+        <div class="cat-row-bar-wrap"><div class="cat-row-bar" style="width:${pct}%;background:${cat.color}"></div></div>
+        <div class="cat-row-pct">${pct}%</div>
+        <div class="cat-row-val">${fmt(val)}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function setReportYear(y){ reportYear=y; renderApp(); }
+
+function openAddInvestment(){
+  const today=new Date().toISOString().slice(0,10);
+  const typeOptions=INVESTMENT_TYPES.map(t=>`<option value="${t.id}">${t.icon} ${t.label}</option>`).join('');
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Novo Investimento</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Valor Investido (R$)</label>
+      <input id="i-amount" class="form-input" type="number" inputmode="decimal" placeholder="0,00" step="0.01" min="0" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input id="i-desc" class="form-input" type="text" placeholder="Ex: CDB Nubank, IVVB11...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select id="i-type" class="form-select">${typeOptions}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input id="i-date" class="form-input" type="date" value="${today}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Instituição (opcional)</label>
+      <input id="i-inst" class="form-input" type="text" placeholder="Ex: Nubank, XP, Rico...">
+    </div>
+    <button class="btn btn-primary" style="background:var(--rose)" onclick="submitInvestment()">Salvar Investimento</button>
+  </div>`);
+}
+
+function submitInvestment(){
+  const amount=parseFloat(document.getElementById('i-amount').value);
+  const desc=document.getElementById('i-desc').value.trim();
+  const type=document.getElementById('i-type').value;
+  const date=document.getElementById('i-date').value;
+  const institution=document.getElementById('i-inst').value.trim();
+  if(!amount||amount<=0){ showToast('⚠️ Informe o valor'); return; }
+  state.investments.push({ id:uid(), amount, desc, type, date, institution });
+  saveState(); closeModal(); renderApp();
+  showToast('✅ Investimento salvo!');
+}
+
+function deleteInvestment(id){
+  if(!confirm('Remover este investimento?')) return;
+  state.investments=state.investments.filter(i=>i.id!==id);
+  saveState(); renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.getElementById('modal-overlay').addEventListener('click', closeModal);
+loadState();
+renderApp();
+</script>
+</body>
+</html>

@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Instituto Soraia Abrao · BPO v2.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#FAF8F5;--surface:#FFFFFF;--surface2:#F2EDE8;--nude:#E8DDD3;
+      --gold:#C9A96E;--gold-bg:#FBF5EC;--rose:#B8857A;--rose-bg:#F9F0EE;
+      --mauve:#9B7FA6;--mauve-bg:#F5F0F8;--mauve-brd:#D4BFE0;
+      --green:#5A9E8A;--green-bg:#EEF6F3;--green-brd:#B8DDD5;
+      --warn:#D4854A;--warn-bg:#FBF0E8;--warn-brd:#F0C4A0;
+      --danger:#C0544A;--danger-bg:#FDF0EF;--danger-brd:#EDBBB8;
+      --text:#2C2C2C;--text-mid:#7A7A7A;--text-light:#B0A8A0;
+      --r:16px;--r-sm:10px;--sh:0 2px 12px rgba(44,44,44,.08);--sh-md:0 4px 24px rgba(44,44,44,.13);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+    body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+    #app{padding-bottom:84px;max-width:900px;margin:0 auto;}
+    .view{display:none;animation:fadeIn .18s ease;}.view.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+    .header{background:var(--surface);padding:16px 20px 12px;position:sticky;top:0;z-index:10;box-shadow:0 1px 0 var(--nude);}
+    .header-row{display:flex;align-items:center;justify-content:space-between;}
+    .header-brand{display:flex;align-items:center;gap:8px;}
+    .header-logo{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--mauve),var(--rose));display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0;}
+    .header-titles h1{font-size:15px;font-weight:700;}.header-titles span{font-size:11px;color:var(--text-mid);}
+    .month-nav{display:flex;align-items:center;gap:6px;}
+    .month-nav button{background:var(--surface2);border:none;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--text-mid);transition:background .15s;}
+    .month-nav button:active{background:var(--nude);}
+    .month-name{font-size:12px;font-weight:600;color:var(--text);min-width:95px;text-align:center;text-transform:capitalize;}
+    .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:900px;background:var(--surface);border-top:1px solid var(--nude);display:flex;z-index:20;padding-bottom:env(safe-area-inset-bottom);}
+    .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 2px 7px;cursor:pointer;gap:2px;color:var(--text-light);font-size:9px;font-weight:500;transition:color .15s;border:none;background:none;font-family:'Poppins',sans-serif;position:relative;}
+    .nav-btn svg{width:20px;height:20px;}.nav-btn.active{color:var(--gold);}
+    .nav-btn.ent.active{color:var(--green);}.nav-btn.pay.active{color:var(--danger);}
+    .nav-btn.rec.active{color:var(--mauve);}.nav-btn.more.active{color:var(--warn);}
+    .nav-badge{position:absolute;top:6px;right:calc(50% - 16px);background:var(--danger);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+    .pm-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;letter-spacing:.3px;}
+    .pm-pix{background:#E0F4F0;color:#0D9488;border:1px solid #A7DED8;}
+    .pm-dinheiro{background:var(--green-bg);color:var(--green);border:1px solid var(--green-brd);}
+    .pm-credito{background:var(--mauve-bg);color:var(--mauve);border:1px solid var(--mauve-brd);}
+    .pm-debito{background:var(--gold-bg);color:#A07830;border:1px solid #EDD9B5;}
+    .pm-transferencia{background:var(--rose-bg);color:var(--rose);border:1px solid #E8C0BA;}
+    .card-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.3px;}
+    .card-bradesco-pj{background:#FDE8E8;color:#CC0000;border:1px solid #F5BBBB;}
+    .card-bradesco-pf{background:#FFF0E0;color:#CC5500;border:1px solid #F5CCAA;}
+    .card-itau-pj{background:#FFF3E0;color:#CC6600;border:1px solid #F5D5A0;}
+    .card-nubank{background:#F0E8FA;color:#7B2FBE;border:1px solid #D0B0F0;}
+    .recur-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:#EEF6F3;color:#5A9E8A;border:1px solid #B8DDD5;letter-spacing:.3px;}
+    .section{padding:14px 20px 0;}.section-title{font-size:12px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;}
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 20px 0;}
+    .sum-card{background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);}
+    .sum-card .sc-label{font-size:10px;color:var(--text-mid);margin-bottom:3px;}
+    .sum-card .sc-value{font-size:19px;font-weight:700;color:var(--text);}
+    .sum-card .sc-sub{font-size:10px;color:var(--text-light);margin-top:2px;}
+    .sum-card.green{background:var(--green-bg);border:1.5px solid var(--green-brd);}
+    .sum-card.green .sc-label,.sum-card.green .sc-value{color:var(--green);}
+    .sum-card.red{background:var(--danger-bg);border:1.5px solid var(--danger-brd);}
+    .sum-card.red .sc-label,.sum-card.red .sc-value{color:var(--danger);}
+    .sum-card.gold{background:var(--gold-bg);border:1.5px solid #EDD9B5;}
+    .sum-card.gold .sc-label,.sum-card.gold .sc-value{color:var(--gold);}
+    .sum-card.mauve{background:var(--mauve-bg);border:1.5px solid var(--mauve-brd);}
+    .sum-card.mauve .sc-label,.sum-card.mauve .sc-value{color:var(--mauve);}
+    .sum-card.warn{background:var(--warn-bg);border:1.5px solid var(--warn-brd);}
+    .sum-card.warn .sc-label,.sum-card.warn .sc-value{color:var(--warn);}
+    .alert-banner{margin:12px 20px 0;border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+    .alert-banner.danger{background:var(--danger-bg);border:1.5px solid var(--danger-brd);}
+    .alert-banner.warn{background:var(--warn-bg);border:1.5px solid var(--warn-brd);}
+    .alert-banner.info{background:var(--mauve-bg);border:1.5px solid var(--mauve-brd);}
+    .alert-banner .ab-icon{font-size:20px;flex-shrink:0;}.alert-banner .ab-text{flex:1;}
+    .alert-banner .ab-title{font-size:12px;font-weight:600;color:var(--danger);}
+    .alert-banner.warn .ab-title{color:var(--warn);}.alert-banner.info .ab-title{color:var(--mauve);}
+    .alert-banner .ab-sub{font-size:11px;color:var(--text-mid);}
+    .item-list{padding:12px 20px 0;display:flex;flex-direction:column;gap:10px;}
+    .item-card{background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .15s;}
+    .item-card:active{box-shadow:var(--sh-md);}
+    .item-card .ic-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .item-card .ic-left{flex:1;min-width:0;}.item-card .ic-name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .item-card .ic-sub{font-size:11px;color:var(--text-mid);margin-top:2px;}
+    .item-card .ic-right{text-align:right;flex-shrink:0;}.item-card .ic-amount{font-size:14px;font-weight:700;}
+    .item-card .ic-date{font-size:10px;color:var(--text-light);margin-top:2px;}
+    .status-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:.4px;}
+    .badge-pago{background:var(--green-bg);color:var(--green);border:1px solid var(--green-brd);}
+    .badge-pendente{background:var(--gold-bg);color:var(--gold);border:1px solid #EDD9B5;}
+    .badge-vencido{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-brd);}
+    .badge-parcial{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-brd);}
+    .inst-list{margin-top:12px;padding-top:12px;border-top:1px solid var(--nude);display:flex;flex-direction:column;gap:6px;}
+    .card-actions-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+    .action-btn{flex:1;min-width:calc(50% - 4px);padding:8px;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;transition:background .15s;}
+    .action-btn.del{background:var(--danger-bg);color:var(--danger);}
+    .action-btn.edit{background:var(--surface2);color:var(--text-mid);}
+    .action-btn.pay-btn{background:var(--green-bg);color:var(--green);border:1px solid var(--green-brd);}
+    .action-btn.partial-btn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-brd);}
+    .filter-bar{padding:12px 20px 4px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;}
+    .filter-bar::-webkit-scrollbar{display:none;}
+    .chip{flex-shrink:0;padding:6px 14px;border-radius:20px;background:var(--surface);border:1.5px solid var(--nude);font-size:12px;font-weight:500;color:var(--text-mid);cursor:pointer;white-space:nowrap;font-family:'Poppins',sans-serif;transition:all .15s;}
+    .chip.active{background:var(--gold);border-color:var(--gold);color:#FFF;}
+    .fab{position:fixed;bottom:90px;right:20px;z-index:15;width:52px;height:52px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(201,169,110,.45);transition:transform .15s;}
+    .fab:active{transform:scale(.93);}.fab svg{width:24px;height:24px;stroke:#FFF;fill:none;stroke-width:2;}
+    .fab.green-fab{background:var(--green);}.fab.red-fab{background:var(--danger);}.fab.mauve-fab{background:var(--mauve);}
+    #overlay{position:fixed;inset:0;background:rgba(44,44,44,.45);z-index:30;display:none;backdrop-filter:blur(2px);}
+    #sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:900px;background:var(--surface);border-radius:24px 24px 0 0;z-index:31;display:none;max-height:92vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom);}
+    .sheet-handle{width:36px;height:4px;background:var(--nude);border-radius:2px;margin:12px auto 0;}
+    .sheet-title{font-size:16px;font-weight:700;padding:14px 20px 0;}
+    .sheet-body{padding:16px 20px 24px;}
+    .field{margin-bottom:14px;}.field label{display:block;font-size:12px;font-weight:600;color:var(--text-mid);margin-bottom:5px;}
+    .field input,.field select,.field textarea{width:100%;padding:11px 14px;border-radius:var(--r-sm);border:1.5px solid var(--nude);background:var(--bg);font-family:'Poppins',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .15s;appearance:none;}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--gold);}
+    .field textarea{resize:none;height:70px;}
+    .field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .radio-group{display:flex;gap:8px;flex-wrap:wrap;}
+    .radio-opt{flex:1;min-width:calc(50% - 4px);padding:10px;border-radius:var(--r-sm);border:1.5px solid var(--nude);text-align:center;cursor:pointer;font-size:13px;font-weight:500;color:var(--text-mid);transition:all .15s;user-select:none;}
+    .radio-opt.selected{border-color:var(--gold);background:var(--gold-bg);color:var(--gold);}
+    .radio-opt input{display:none;}
+    .btn-primary{width:100%;padding:14px;border-radius:var(--r);border:none;background:var(--gold);color:#FFF;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;margin-top:4px;}
+    .btn-primary:active{opacity:.85;}
+    .btn-secondary{width:100%;padding:13px;border-radius:var(--r);border:1.5px solid var(--nude);background:transparent;color:var(--text-mid);font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;}
+    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#2C2C2C;color:#FFF;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:500;z-index:50;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
+    #toast.show{opacity:1;}
+    .pro-cards{padding:14px 20px 0;display:flex;flex-direction:column;gap:14px;}
+    .pro-card{background:var(--surface);border-radius:var(--r);padding:18px;box-shadow:var(--sh);}
+    .pro-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+    .pro-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#FFF;flex-shrink:0;}
+    .pro-name{font-size:15px;font-weight:700;}.pro-role{font-size:11px;color:var(--text-mid);}
+    .pro-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+    .pro-stat{background:var(--bg);border-radius:var(--r-sm);padding:10px 8px;text-align:center;}
+    .pro-stat .ps-val{font-size:14px;font-weight:700;color:var(--text);}.pro-stat .ps-lbl{font-size:9px;color:var(--text-mid);text-transform:uppercase;letter-spacing:.3px;margin-top:2px;}
+    .pro-edit-btn{margin-top:12px;width:100%;padding:10px;border-radius:var(--r-sm);border:1.5px solid var(--nude);background:transparent;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;color:var(--text-mid);cursor:pointer;}
+    .cf-balance{margin:14px 20px 0;background:linear-gradient(135deg,var(--mauve) 0%,var(--rose) 100%);border-radius:var(--r);padding:20px;color:#FFF;box-shadow:0 4px 20px rgba(155,127,166,.35);}
+    .cf-balance-label{font-size:11px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;}
+    .cf-balance-value{font-size:32px;font-weight:700;margin-top:4px;}
+    .cf-balance-sub{font-size:11px;opacity:.7;margin-top:4px;}
+    .cf-balance-edit{background:rgba(255,255,255,.2);border:none;border-radius:20px;color:#FFF;font-size:11px;padding:5px 12px;cursor:pointer;font-family:'Poppins',sans-serif;margin-top:12px;}
+    .cf-projections{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 20px 0;}
+    .cf-proj{background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);}
+    .cf-proj .cfp-label{font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:4px;}
+    .cf-proj .cfp-value{font-size:17px;font-weight:700;}.cf-proj .cfp-count{font-size:10px;color:var(--text-light);margin-top:2px;}
+    .cf-proj.out .cfp-label,.cf-proj.out .cfp-value{color:var(--danger);}
+    .cf-proj.net .cfp-label,.cf-proj.net .cfp-value{color:var(--mauve);}
+    .cf-upcoming{padding:14px 20px 0;}
+    .cf-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--nude);}
+    .cf-item:last-child{border-bottom:none;}.cf-item-name{font-size:13px;font-weight:500;}.cf-item-date{font-size:11px;color:var(--text-mid);}
+    .cf-item-amt{font-size:14px;font-weight:700;}.cf-item-amt.in{color:var(--green);}.cf-item-amt.out{color:var(--danger);}
+    .dre-table{padding:14px 20px 0;display:flex;flex-direction:column;gap:0;}
+    .dre-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--nude);}
+    .dre-row:last-child{border-bottom:none;}
+    .dre-row.total{border-top:2px solid var(--nude);border-bottom:2px solid var(--nude);margin-top:4px;background:var(--surface2);border-radius:var(--r-sm);padding:12px 14px;margin:4px -2px;}
+    .dre-row.sub-item .dre-label{padding-left:16px;color:var(--text-mid);font-size:12px;}
+    .dre-label{font-size:13px;font-weight:500;color:var(--text);}.dre-value{font-size:14px;font-weight:700;}
+    .dre-value.pos{color:var(--green);}.dre-value.neg{color:var(--danger);}.dre-value.neut{color:var(--text-mid);}
+    .dre-section-header{padding:14px 0 6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);}
+    .dre-margin-card{margin:14px 20px 0;background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;}
+    .dre-margin-label{font-size:13px;color:var(--text-mid);}.dre-margin-value{font-size:22px;font-weight:700;color:var(--mauve);}
+    .dre-chart-wrap{margin:14px 20px 0;background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--sh);}
+    .dre-chart-wrap canvas{max-height:200px;}
+    .empty-state{text-align:center;padding:40px 20px;}.empty-state .es-icon{font-size:40px;margin-bottom:12px;}
+    .empty-state .es-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}.empty-state .es-sub{font-size:13px;color:var(--text-mid);}
+    .search-wrap{padding:10px 20px 0;}
+    .search-input{width:100%;padding:10px 14px 10px 38px;border-radius:var(--r-sm);border:1.5px solid var(--nude);background:var(--surface);font-family:'Poppins',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23B0A8A0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center;}
+    .search-input:focus{border-color:var(--gold);}
+    .divider{height:1px;background:var(--nude);margin:14px 20px 0;}
+    /* MORE MENU GRID */
+    .more-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:16px 20px 24px;}
+    .more-card{background:var(--surface2);border-radius:var(--r);padding:16px 12px;text-align:center;cursor:pointer;transition:background .15s;border:none;font-family:'Poppins',sans-serif;}
+    .more-card:active{background:var(--nude);}
+    .more-card .mc-icon{font-size:24px;margin-bottom:6px;}.more-card .mc-label{font-size:11px;font-weight:600;color:var(--text);}
+    /* PATIENT CARDS */
+    .patient-card{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--sh);margin-bottom:10px;cursor:pointer;}
+    .patient-name{font-size:14px;font-weight:700;color:var(--text);}
+    .patient-meta{font-size:12px;color:var(--text-mid);margin-top:2px;}
+    .patient-stats{display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--nude);}
+    .patient-stat{flex:1;text-align:center;}
+    .patient-stat .pst-val{font-size:13px;font-weight:700;}.patient-stat .pst-lbl{font-size:9px;color:var(--text-mid);text-transform:uppercase;}
+    /* INVENTORY */
+    .inv-card{background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);margin-bottom:10px;cursor:pointer;}
+    .inv-name{font-size:13px;font-weight:600;}.inv-meta{font-size:11px;color:var(--text-mid);margin-top:2px;}
+    .inv-qty{font-size:16px;font-weight:700;}.inv-low{color:var(--danger);}
+    .inv-ok{color:var(--green);}
+    /* EXPORT */
+    .export-btn{width:100%;padding:14px 16px;border-radius:var(--r);border:1.5px solid var(--nude);background:var(--surface);font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;display:flex;align-items:center;gap:12px;margin-bottom:10px;transition:background .15s;}
+    .export-btn:active{background:var(--surface2);}
+    .export-btn .eb-icon{font-size:20px;}
+    .export-btn .eb-sub{font-size:11px;color:var(--text-mid);font-weight:400;display:block;margin-top:1px;}
+    /* COMMISSION */
+    .comm-box{background:var(--mauve-bg);border:1.5px solid var(--mauve-brd);border-radius:var(--r-sm);padding:12px 14px;margin-top:12px;}
+    .comm-box-title{font-size:11px;font-weight:700;color:var(--mauve);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;}
+    .comm-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;}
+    .comm-label{font-size:12px;color:var(--text-mid);}.comm-value{font-size:13px;font-weight:700;color:var(--mauve);}
+    .pill-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
+    .pill{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;background:var(--surface2);color:var(--text-mid);cursor:pointer;border:none;font-family:'Poppins',sans-serif;}
+    .pill.selected{background:var(--mauve-bg);color:var(--mauve);border:1px solid var(--mauve-brd);}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<div id="overlay" onclick="closeSheet()"></div>
+<div id="sheet"><div class="sheet-handle"></div><div id="sheet-inner"></div></div>
+<div id="toast"></div>
+<script>
+// ═══ STATE ═══
+const CARDS=[{id:'bradesco-pj',name:'Bradesco PJ',cls:'card-bradesco-pj'},{id:'bradesco-pf',name:'Bradesco PF',cls:'card-bradesco-pf'},{id:'itau-pj',name:'Itaú PJ',cls:'card-itau-pj'},{id:'nubank',name:'Nubank',cls:'card-nubank'}];
+function getCard(id){return CARDS.find(c=>c.id===id)||null;}
+const ACCOUNTS=[{id:'bradesco-pj',name:'Bradesco PJ'},{id:'itau-pj',name:'Itaú PJ'},{id:'nubank-pf',name:'Nubank PF'},{id:'bradesco-pf',name:'Bradesco PF'}];
+function accountName(id){return(ACCOUNTS.find(a=>a.id===id)||{name:id||''}).name;}
+function acctTagHTML(id){return id?`<span style="font-size:10px;font-weight:600;color:var(--text-mid);background:var(--surface2);padding:2px 7px;border-radius:20px;border:1px solid var(--nude);">🏦 ${accountName(id)}</span>`:'';}
+function cardTagHTML(cardId){const c=getCard(cardId);if(!c)return'';return`<span class="card-tag ${c.cls}">💳 ${c.name}</span>`;}
+const PAYMENT_METHODS=[{id:'pix',label:'PIX',cls:'pm-pix'},{id:'dinheiro',label:'Dinheiro',cls:'pm-dinheiro'},{id:'credito',label:'Crédito',cls:'pm-credito'},{id:'debito',label:'Débito',cls:'pm-debito'},{id:'transferencia',label:'Transferência',cls:'pm-transferencia'}];
+function getPM(id){return PAYMENT_METHODS.find(p=>p.id===id)||{label:id,cls:'pm-pix'};}
+function pmBadgeHTML(methodId,cardId){const pm=getPM(methodId);const c=cardId?getCard(cardId):null;return`<span class="pm-badge ${pm.cls}">${pm.label}${c?' · '+c.name:''}</span>`;}
+const ENT_CATEGORIES=['Procedimento','Consulta','Produto','Pacote','Outros'];
+const INV_CATEGORIES=['Preenchedores','Toxina Botulínica','Skincare','Materiais','Equipamentos','Outros'];
+const DEFAULT_STATE={
+  settings:{clinicName:'',cashBalance:0},
+  professionals:[{id:'pro1',name:'Dra. Soraia',commission:0,color:'#9B7FA6',role:'Proprietária'},{id:'pro2',name:'Profissional 2',commission:40,color:'#B8857A',role:'Profissional'}],
+  payables:[],entries:[],patients:[],inventory:[],bankStatements:[],
+  suppliers:[{id:'sup1',name:'Fornecedor de Insumos',category:'Insumos'},{id:'sup2',name:'Imóvel / Aluguel',category:'Aluguel'},{id:'sup3',name:'Contador',category:'Contabilidade'}],
+  payCategories:['Insumos/Materiais','Aluguel','Marketing','Energia/Telecom','Folha/Pró-labore','Equipamentos','Contabilidade','Outros']
+};
+let state={};
+let currentView='dashboard';
+let viewMonth=new Date().toISOString().slice(0,7);
+let payFilter='todos';let entFilter='todos';
+let expandedPay=null;let expandedEnt=null;let expandedPat=null;let expandedInv=null;
+let dreChart=null;
+let searchEnt='';let searchPay='';let searchPat='';let searchInv='';
+
+// ═══ PERSISTENCE ═══
+function loadState(){
+  try{
+    const saved=localStorage.getItem('soraia_bpo_v2');
+    if(saved){state=JSON.parse(saved);}else{state=JSON.parse(JSON.stringify(DEFAULT_STATE));}
+    if(!state.payCategories)state.payCategories=DEFAULT_STATE.payCategories;
+    if(!state.suppliers)state.suppliers=DEFAULT_STATE.suppliers;
+    if(!state.settings)state.settings=DEFAULT_STATE.settings;
+    if(state.settings.cashBalance===undefined)state.settings.cashBalance=0;
+    if(!state.entries)state.entries=[];
+    if(!state.professionals)state.professionals=DEFAULT_STATE.professionals;
+    if(!state.patients)state.patients=[];
+    if(!state.inventory)state.inventory=[];
+    if(!state.bankStatements)state.bankStatements=[];
+  }catch(e){state=JSON.parse(JSON.stringify(DEFAULT_STATE));}
+}
+function saveState(){localStorage.setItem('soraia_bpo_v2',JSON.stringify(state));}
+
+// ═══ HELPERS ═══
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmt(n){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(n||0);}
+function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});}
+function fmtDateFull(d){return new Date(d+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function today(){return new Date().toISOString().slice(0,10);}
+function monthKey(d){return d.slice(0,7);}
+function monthName(k){if(!k)return'';const[y,m]=k.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});}
+function addDays(d,n){const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+n);return dt.toISOString().slice(0,10);}
+function addMonths(d,n){const dt=new Date(d+'T12:00:00');dt.setMonth(dt.getMonth()+n);return dt.toISOString().slice(0,10);}
+function getProfessional(id){return state.professionals.find(p=>p.id===id)||{name:'—',color:'#aaa'};}
+function getPatient(id){return state.patients.find(p=>p.id===id)||null;}
+function badgeHTML(status){
+  const map={pago:'badge-pago',pendente:'badge-pendente',vencido:'badge-vencido',parcial:'badge-parcial'};
+  const labels={pago:'Pago',pendente:'Pendente',vencido:'Vencido',parcial:'Parcial'};
+  return`<span class="status-badge ${map[status]||'badge-pendente'}">${labels[status]||status}</span>`;
+}
+
+// ═══ NAVIGATION ═══
+function navigate(v){currentView=v;expandedPay=null;expandedEnt=null;expandedPat=null;expandedInv=null;closeSheet();renderApp();}
+function prevMonth(){const[y,m]=viewMonth.split('-').map(Number);viewMonth=new Date(y,m-2,1).toISOString().slice(0,7);renderApp();}
+function nextMonth(){const[y,m]=viewMonth.split('-').map(Number);viewMonth=new Date(y,m,1).toISOString().slice(0,7);renderApp();}
+
+// ═══ SHEET / TOAST ═══
+function openSheet(html){document.getElementById('sheet-inner').innerHTML=html;document.getElementById('overlay').style.display='block';document.getElementById('sheet').style.display='block';}
+function closeSheet(){document.getElementById('overlay').style.display='none';document.getElementById('sheet').style.display='none';document.getElementById('sheet-inner').innerHTML='';}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+// ═══ SVG ICONS ═══
+const svgHome=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`;
+const svgEnt=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+const svgPay=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
+const svgMore=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>`;
+const svgPlus=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`;
+
+// ═══ COMPUTED BADGES ═══
+function countLowInventory(){return state.inventory.filter(i=>i.quantity<=i.minQuantity).length;}
+
+// ═══ RENDER APP ═══
+function renderApp(){
+  const views={dashboard:renderDashboard,entries:renderEntradas,payables:renderPayables,patients:renderPatients,professionals:renderProfessionals,cashflow:renderCashFlow,dre:renderDRE,inventory:renderInventory,reports:renderReports,reconciliation:renderReconciliation};
+  const viewFn=views[currentView]||renderDashboard;
+  const lowInv=countLowInventory();
+  const nav=`<nav class="bottom-nav">
+    ${navBtn('dashboard','',svgHome,'Início',0)}
+    ${navBtn('entries','ent',svgEnt,'Entradas',0)}
+    ${navBtn('payables','pay',svgPay,'A/Pagar',0)}
+    <button class="nav-btn more ${['professionals','cashflow','dre','patients','inventory','reports','reconciliation'].includes(currentView)?'active':''}" onclick="openMoreMenu()">
+      ${svgMore}<span>Mais</span>${lowInv>0?`<span class="nav-badge">${lowInv}</span>`:''}
+    </button>
+  </nav>`;
+  document.getElementById('app').innerHTML=`<div class="view active">${viewFn()}</div>${nav}`;
+  if(currentView==='dre')buildDreChart();
+}
+function navBtn(view,cls,icon,label,badge){
+  const active=currentView===view?'active':'';
+  return`<button class="nav-btn ${cls} ${active}" onclick="navigate('${view}')">${icon}<span>${label}</span>${badge>0?`<span class="nav-badge">${badge}</span>`:''}</button>`;
+}
+function openMoreMenu(){
+  openSheet(`
+    <div class="sheet-title">Mais opções</div>
+    <div class="more-grid">
+      <button class="more-card" onclick="navigate('patients')"><div class="mc-icon">👥</div><div class="mc-label">Pacientes</div></button>
+      <button class="more-card" onclick="navigate('professionals')"><div class="mc-icon">💼</div><div class="mc-label">Profissionais</div></button>
+      <button class="more-card" onclick="navigate('dre')"><div class="mc-icon">📊</div><div class="mc-label">DRE</div></button>
+      <button class="more-card" onclick="navigate('cashflow')"><div class="mc-icon">💸</div><div class="mc-label">Fluxo de Caixa</div></button>
+      <button class="more-card" onclick="navigate('inventory')"><div class="mc-icon">📦</div><div class="mc-label">Estoque</div></button>
+      <button class="more-card" onclick="navigate('reconciliation')"><div class="mc-icon">🏦</div><div class="mc-label">Conciliação</div></button>
+      <button class="more-card" onclick="navigate('reports')"><div class="mc-icon">📤</div><div class="mc-label">Exportar</div></button>
+    </div>`);
+}
+
+// ═══════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDashboard(){
+  const todayStr=today();
+  const allPay=state.payables;
+  const paidMes=allPay.filter(p=>p.paid&&p.paidDate&&monthKey(p.paidDate)===viewMonth);
+  const totalPago=paidMes.reduce((s,p)=>s+p.amount,0);
+  const pendMes=allPay.filter(p=>!p.paid&&monthKey(p.dueDate)===viewMonth);
+  const totalPend=pendMes.reduce((s,p)=>s+p.amount,0);
+  const vencidas=allPay.filter(p=>!p.paid&&p.dueDate<todayStr);
+  const totalVenc=vencidas.reduce((s,p)=>s+p.amount,0);
+  const receitaMes=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth).reduce((s,e)=>s+e.amount,0);
+  const resultado=receitaMes-totalPago;
+  const procedMes=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth).length;
+
+  // Prev month comparison
+  const[y,m]=viewMonth.split('-').map(Number);
+  const prevMk=new Date(y,m-2,1).toISOString().slice(0,7);
+  const receitaPrev=(state.entries||[]).filter(e=>monthKey(e.date)===prevMk).reduce((s,e)=>s+e.amount,0);
+  const varPct=receitaPrev>0?((receitaMes-receitaPrev)/receitaPrev*100):0;
+
+  // Low inventory
+  const lowItems=state.inventory.filter(i=>i.quantity<=i.minQuantity);
+
+  // Next 7 days payables
+  const next7=addDays(todayStr,7);
+  const proxVenc=allPay.filter(p=>!p.paid&&p.dueDate>=todayStr&&p.dueDate<=next7).sort((a,b)=>a.dueDate.localeCompare(b.dueDate)).slice(0,5);
+
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-brand">
+          <div class="header-logo">SA</div>
+          <div class="header-titles"><h1>${state.settings.clinicName}</h1><span>BPO Financeiro v2.0</span></div>
+        </div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <span class="month-name">${monthName(viewMonth)}</span>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="sum-card green">
+        <div class="sc-label">Entradas do Mês</div>
+        <div class="sc-value">${fmt(receitaMes)}</div>
+        <div class="sc-sub">${varPct!==0?`${varPct>0?'▲':'▼'} ${Math.abs(varPct).toFixed(0)}% vs mês ant.`:''}</div>
+      </div>
+      <div class="sum-card red">
+        <div class="sc-label">Despesas Pagas</div>
+        <div class="sc-value">${fmt(totalPago)}</div>
+        <div class="sc-sub">${paidMes.length} lançamentos</div>
+      </div>
+      <div class="sum-card ${resultado>=0?'mauve':'red'}">
+        <div class="sc-label">Resultado</div>
+        <div class="sc-value">${fmt(resultado)}</div>
+        <div class="sc-sub">Receita − Despesas</div>
+      </div>
+      <div class="sum-card gold">
+        <div class="sc-label">Procedimentos</div>
+        <div class="sc-value">${procedMes}</div>
+        <div class="sc-sub">no mês</div>
+      </div>
+    </div>
+
+    ${totalVenc>0?`<div class="alert-banner danger" onclick="navigate('payables');payFilter='vencido';renderApp()">
+      <span class="ab-icon">⚠️</span><div class="ab-text">
+        <div class="ab-title">Despesas Vencidas — ${fmt(totalVenc)}</div>
+        <div class="ab-sub">${vencidas.length} conta(s) em atraso</div></div>
+      <span style="color:var(--danger);font-size:18px;">›</span></div>`:''}
+
+    ${lowItems.length>0?`<div class="alert-banner warn" onclick="navigate('inventory')">
+      <span class="ab-icon">📦</span><div class="ab-text">
+        <div class="ab-title">Estoque Baixo</div>
+        <div class="ab-sub">${lowItems.map(i=>i.name).join(', ')}</div></div>
+      <span style="color:var(--warn);font-size:18px;">›</span></div>`:''}
+
+    ${proxVenc.length>0?`<div class="section">
+      <div class="section-title">Vencimentos próximos (7 dias)</div>
+      ${proxVenc.map(p=>`<div class="cf-item">
+        <div class="cf-item-left">
+          <div class="cf-item-name">${p.desc}</div>
+          <div class="cf-item-date">${fmtDate(p.dueDate)} · ${p.category}</div>
+        </div>
+        <div class="cf-item-amt out">${fmt(p.amount)}</div>
+      </div>`).join('')}
+    </div>`:''}
+
+    <div class="section" style="padding-bottom:16px;">
+      <div class="section-title" style="margin-top:14px;">Acesso rápido</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button onclick="openNewEntrada()" style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--green-brd);background:var(--green-bg);color:var(--green);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Nova Entrada</button>
+        <button onclick="openNewPayable()" style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--danger-brd);background:var(--danger-bg);color:var(--danger);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Nova Despesa</button>
+        <button onclick="navigate('cashflow')" style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--mauve-brd);background:var(--mauve-bg);color:var(--mauve);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">💸 Fluxo de Caixa</button>
+        <button onclick="navigate('dre')" style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--nude);background:var(--surface2);color:var(--text-mid);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">📊 Ver DRE</button>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+// ENTRADAS
+// ═══════════════════════════════════════════════
+function renderEntradas(){
+  const all=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth).sort((a,b)=>b.date.localeCompare(a.date));
+  const shown=(searchEnt?all.filter(e=>e.desc.toLowerCase().includes(searchEnt.toLowerCase())):all).filter(e=>entFilter==='todos'?true:e.paymentMethod===entFilter);
+  const totalMes=all.reduce((s,e)=>s+e.amount,0);
+  const countMes=all.length;
+  const byPM={};all.forEach(e=>{byPM[e.paymentMethod]=(byPM[e.paymentMethod]||0)+e.amount;});
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>Entradas</h1><span>Serviços e recebimentos</span></div>
+        <div class="month-nav"><button onclick="prevMonth()">‹</button><span class="month-name">${monthName(viewMonth)}</span><button onclick="nextMonth()">›</button></div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-card green"><div class="sc-label">Total Recebido</div><div class="sc-value">${fmt(totalMes)}</div><div class="sc-sub">${countMes} lançamento${countMes!==1?'s':''}</div></div>
+      <div class="sum-card mauve"><div class="sc-label">Ticket Médio</div><div class="sc-value">${countMes?fmt(totalMes/countMes):'R$ 0,00'}</div><div class="sc-sub">por serviço</div></div>
+    </div>
+    ${Object.keys(byPM).length>0?`<div class="section"><div class="section-title">Por forma de pagamento</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding-top:4px;">
+        ${Object.entries(byPM).sort((a,b)=>b[1]-a[1]).map(([pm,val])=>`
+          <div style="background:var(--surface);border-radius:var(--r-sm);padding:10px 14px;box-shadow:var(--sh);min-width:140px;flex:1;">
+            <div style="margin-bottom:4px;">${pmBadgeHTML(pm,'')}</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);">${fmt(val)}</div>
+            <div style="font-size:10px;color:var(--text-light);">${(val/totalMes*100).toFixed(0)}% do total</div>
+          </div>`).join('')}</div></div>`:''}
+    <div class="search-wrap"><input class="search-input" placeholder="Buscar entrada…" value="${searchEnt}" oninput="searchEnt=this.value;renderApp()"></div>
+    <div class="filter-bar">
+      <button class="chip ${entFilter==='todos'?'active':''}" onclick="entFilter='todos';renderApp()">Todos</button>
+      ${PAYMENT_METHODS.map(pm=>`<button class="chip ${entFilter===pm.id?'active':''}" onclick="entFilter='${pm.id}';renderApp()">${pm.label}</button>`).join('')}
+    </div>
+    <div class="item-list">
+      ${shown.length===0?`<div class="empty-state"><div class="es-icon">📥</div><div class="es-title">Nenhuma entrada</div><div class="es-sub">Registre os serviços prestados no dia</div></div>`:''}
+      ${shown.map(e=>{
+        const pro=e.professionalId?getProfessional(e.professionalId):null;
+        const pat=e.patientId?getPatient(e.patientId):null;
+        const exp=expandedEnt===e.id;
+        return`<div class="item-card" onclick="expandedEnt=expandedEnt==='${e.id}'?null:'${e.id}';renderApp()">
+          <div class="ic-row">
+            <div class="ic-left">
+              <div class="ic-name">${e.desc}</div>
+              <div class="ic-sub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;">
+                ${pmBadgeHTML(e.paymentMethod,e.paymentCard)}
+                ${pat?`<span style="font-size:11px;color:var(--mauve);font-weight:600;">👤 ${pat.name}</span>`:''}
+                ${pro?`<span style="font-size:11px;font-weight:600;color:${pro.color}">${pro.name}</span>`:''}
+                ${e.category?`<span style="font-size:10px;color:var(--text-light);">${e.category}</span>`:''}
+              </div>
+            </div>
+            <div class="ic-right"><div class="ic-amount" style="color:var(--green)">${fmt(e.amount)}</div><div class="ic-date">${fmtDate(e.date)}</div></div>
+          </div>
+          ${exp?`<div class="inst-list">
+            ${e.notes?`<div style="font-size:12px;color:var(--text-mid);padding:4px 0;">${e.notes}</div>`:''}
+            <div class="card-actions-row" style="margin-top:8px;">
+              <button class="action-btn edit" onclick="event.stopPropagation();openEditEntrada('${e.id}')">Editar</button>
+              <button class="action-btn del" onclick="event.stopPropagation();deleteEntrada('${e.id}')">Excluir</button>
+            </div></div>`:''}
+        </div>`;}).join('')}
+    </div>
+    <button class="fab green-fab" onclick="openNewEntrada()">${svgPlus}</button>`;
+}
+
+let entPMSel='pix';let entCardSel='';
+function openNewEntrada(){
+  const proOpts=state.professionals.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  const patOpts=state.patients.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+  entPMSel='pix';entCardSel='';
+  openSheet(`<div class="sheet-title">Nova Entrada</div><div class="sheet-body">
+    <div class="field"><label>Descrição do serviço</label><input id="ent-desc" placeholder="Ex.: Botox, Limpeza de pele…"></div>
+    <div class="field-row">
+      <div class="field"><label>Valor (R$)</label><input type="number" id="ent-amount" placeholder="0,00" step="0.01" min="0"></div>
+      <div class="field"><label>Data</label><input type="date" id="ent-date" value="${today()}"></div>
+    </div>
+    <div class="field"><label>Forma de pagamento</label>
+      <div class="radio-group">
+        ${PAYMENT_METHODS.map((pm,i)=>`<label class="radio-opt ${i===0?'selected':''}" id="pm-opt-${pm.id}" onclick="selectEntPM('${pm.id}')">${pm.label}</label>`).join('')}
+      </div></div>
+    <div id="ent-card-wrap" style="display:none;" class="field"><label>Maquininha / Cartão</label>
+      <div class="radio-group">
+        ${CARDS.map(c=>`<label class="radio-opt" id="entcard-${c.id}" onclick="selectEntCard('${c.id}')">${c.name}</label>`).join('')}
+      </div></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="ent-cat">
+        ${ENT_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Profissional</label><select id="ent-pro"><option value="">Nenhum</option>${proOpts}</select></div>
+    </div>
+    <div class="field"><label>Paciente (opcional)</label><select id="ent-pat"><option value="">Nenhum</option>${patOpts}</select></div>
+    <div class="field"><label>Observações</label><textarea id="ent-notes" placeholder="Nome do cliente, detalhes…"></textarea></div>
+    <button class="btn-primary" onclick="saveEntrada()">Salvar Entrada</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function selectEntPM(id){entPMSel=id;PAYMENT_METHODS.forEach(pm=>{const el=document.getElementById(`pm-opt-${pm.id}`);if(el)el.classList.toggle('selected',pm.id===id);});const needCard=id==='credito'||id==='debito';document.getElementById('ent-card-wrap').style.display=needCard?'block':'none';if(!needCard)entCardSel='';}
+function selectEntCard(id){entCardSel=id;CARDS.forEach(c=>{const el=document.getElementById(`entcard-${c.id}`);if(el)el.classList.toggle('selected',c.id===id);});}
+function saveEntrada(){
+  const desc=document.getElementById('ent-desc').value.trim();
+  const amount=parseFloat(document.getElementById('ent-amount').value)||0;
+  const date=document.getElementById('ent-date').value;
+  const cat=document.getElementById('ent-cat').value;
+  const proId=document.getElementById('ent-pro').value;
+  const patId=document.getElementById('ent-pat').value;
+  const notes=document.getElementById('ent-notes').value;
+  if(!desc){showToast('Informe a descrição');return;}
+  if(amount<=0){showToast('Informe o valor');return;}
+  if(!date){showToast('Informe a data');return;}
+  if((entPMSel==='credito'||entPMSel==='debito')&&!entCardSel){showToast('Selecione a maquininha/cartão');return;}
+  if(!state.entries)state.entries=[];
+  state.entries.push({id:uid(),date,desc,amount,paymentMethod:entPMSel,paymentCard:entCardSel,category:cat,professionalId:proId,patientId:patId,notes});
+  saveState();closeSheet();showToast('Entrada registrada ✓');renderApp();
+}
+function openEditEntrada(id){
+  const e=(state.entries||[]).find(x=>x.id===id);if(!e)return;
+  const proOpts=state.professionals.map(p=>`<option value="${p.id}" ${p.id===e.professionalId?'selected':''}>${p.name}</option>`).join('');
+  const patOpts=state.patients.map(p=>`<option value="${p.id}" ${p.id===e.patientId?'selected':''}>${p.name}</option>`).join('');
+  openSheet(`<div class="sheet-title">Editar Entrada</div><div class="sheet-body">
+    <div class="field"><label>Descrição</label><input id="ee-desc" value="${e.desc}"></div>
+    <div class="field-row">
+      <div class="field"><label>Valor (R$)</label><input type="number" id="ee-amount" value="${e.amount}" step="0.01"></div>
+      <div class="field"><label>Data</label><input type="date" id="ee-date" value="${e.date}"></div>
+    </div>
+    <div class="field"><label>Forma de pagamento</label><select id="ee-pm">
+      ${PAYMENT_METHODS.map(pm=>`<option value="${pm.id}" ${pm.id===e.paymentMethod?'selected':''}>${pm.label}</option>`).join('')}</select></div>
+    <div class="field"><label>Maquininha (se cartão)</label><select id="ee-card">
+      <option value="">Nenhuma</option>${CARDS.map(c=>`<option value="${c.id}" ${c.id===e.paymentCard?'selected':''}>${c.name}</option>`).join('')}</select></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="ee-cat">
+        ${ENT_CATEGORIES.map(c=>`<option ${c===e.category?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Profissional</label><select id="ee-pro"><option value="">Nenhum</option>${proOpts}</select></div>
+    </div>
+    <div class="field"><label>Paciente</label><select id="ee-pat"><option value="">Nenhum</option>${patOpts}</select></div>
+    <div class="field"><label>Observações</label><textarea id="ee-notes">${e.notes||''}</textarea></div>
+    <button class="btn-primary" onclick="saveEditEntrada('${id}')">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveEditEntrada(id){
+  const e=(state.entries||[]).find(x=>x.id===id);if(!e)return;
+  e.desc=document.getElementById('ee-desc').value.trim()||e.desc;
+  e.amount=parseFloat(document.getElementById('ee-amount').value)||e.amount;
+  e.date=document.getElementById('ee-date').value||e.date;
+  e.paymentMethod=document.getElementById('ee-pm').value;
+  e.paymentCard=document.getElementById('ee-card').value;
+  e.category=document.getElementById('ee-cat').value;
+  e.professionalId=document.getElementById('ee-pro').value;
+  e.patientId=document.getElementById('ee-pat').value;
+  e.notes=document.getElementById('ee-notes').value;
+  saveState();closeSheet();showToast('Atualizado ✓');expandedEnt=null;renderApp();
+}
+function deleteEntrada(id){
+  if(!confirm('Excluir esta entrada?'))return;
+  state.entries=(state.entries||[]).filter(e=>e.id!==id);
+  expandedEnt=null;saveState();renderApp();showToast('Excluído');
+}
+
+// ═══════════════════════════════════════════════
+// PACIENTES
+// ═══════════════════════════════════════════════
+function renderPatients(){
+  const search=searchPat.toLowerCase();
+  const shown=(search?state.patients.filter(p=>p.name.toLowerCase().includes(search)||(p.phone||'').includes(search)):state.patients)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>Pacientes</h1><span>${state.patients.length} cadastrado(s)</span></div>
+      </div>
+    </div>
+    <div class="search-wrap"><input class="search-input" placeholder="Buscar por nome ou telefone…" value="${searchPat}" oninput="searchPat=this.value;renderApp()"></div>
+    <div style="padding:12px 20px 0;">
+      ${shown.length===0?`<div class="empty-state"><div class="es-icon">👥</div><div class="es-title">Nenhum paciente</div><div class="es-sub">Cadastre pacientes para vincular a recebíveis</div></div>`:''}
+      ${shown.map(pat=>{
+        const recs=[];
+        const emAberto=0;
+        const totalPago=0;
+        const exp=expandedPat===pat.id;
+        return`<div class="patient-card" onclick="expandedPat=expandedPat==='${pat.id}'?null:'${pat.id}';renderApp()">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="patient-name">${pat.name}</div>
+              <div class="patient-meta">${pat.phone?'📞 '+pat.phone:''}${pat.email?' · '+pat.email:''}</div>
+            </div>
+            ${emAberto>0?`<span style="font-size:11px;font-weight:700;color:var(--danger);background:var(--danger-bg);padding:3px 10px;border-radius:20px;border:1px solid var(--danger-brd);">Em aberto: ${fmt(emAberto)}</span>`:''}
+          </div>
+          <div class="patient-stats">
+            <div class="patient-stat"><div class="pst-val" style="color:var(--danger)">${fmt(emAberto)}</div><div class="pst-lbl">Em Aberto</div></div>
+            <div class="patient-stat"><div class="pst-val" style="color:var(--green)">${fmt(totalPago)}</div><div class="pst-lbl">Pago Total</div></div>
+            <div class="patient-stat"><div class="pst-val">${recs.length}</div><div class="pst-lbl">Atendimentos</div></div>
+          </div>
+          ${exp?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--nude);">
+            ${pat.cpf?`<div style="font-size:12px;color:var(--text-mid);margin-bottom:6px;">CPF: ${pat.cpf}</div>`:''}
+            ${pat.notes?`<div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;">${pat.notes}</div>`:''}
+            <div class="card-actions-row">
+              <button class="action-btn edit" onclick="event.stopPropagation();openEditPatient('${pat.id}')">Editar</button>
+              <button class="action-btn del" onclick="event.stopPropagation();deletePatient('${pat.id}')">Excluir</button>
+            </div>
+          </div>`:''}
+        </div>`;}).join('')}
+    </div>
+    <button class="fab" onclick="openNewPatient()">${svgPlus}</button>`;
+}
+function openNewPatient(){
+  openSheet(`<div class="sheet-title">Novo Paciente</div><div class="sheet-body">
+    <div class="field"><label>Nome *</label><input id="np-name" placeholder="Nome completo"></div>
+    <div class="field-row">
+      <div class="field"><label>Telefone</label><input id="np-phone" placeholder="(11) 9xxxx-xxxx" type="tel"></div>
+      <div class="field"><label>CPF</label><input id="np-cpf" placeholder="000.000.000-00"></div>
+    </div>
+    <div class="field"><label>E-mail</label><input id="np-email" type="email" placeholder="email@exemplo.com"></div>
+    <div class="field"><label>Observações</label><textarea id="np-notes" placeholder="Alergias, histórico relevante…"></textarea></div>
+    <button class="btn-primary" onclick="saveNewPatient()">Salvar Paciente</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveNewPatient(){
+  const name=document.getElementById('np-name').value.trim();
+  if(!name){showToast('Informe o nome');return;}
+  state.patients.push({id:uid(),name,phone:document.getElementById('np-phone').value.trim(),
+    cpf:document.getElementById('np-cpf').value.trim(),email:document.getElementById('np-email').value.trim(),
+    notes:document.getElementById('np-notes').value,createdAt:today()});
+  saveState();closeSheet();showToast('Paciente cadastrado ✓');renderApp();
+}
+function openEditPatient(id){
+  const p=state.patients.find(x=>x.id===id);if(!p)return;
+  openSheet(`<div class="sheet-title">Editar Paciente</div><div class="sheet-body">
+    <div class="field"><label>Nome *</label><input id="ep-name" value="${p.name}"></div>
+    <div class="field-row">
+      <div class="field"><label>Telefone</label><input id="ep-phone" value="${p.phone||''}" type="tel"></div>
+      <div class="field"><label>CPF</label><input id="ep-cpf" value="${p.cpf||''}"></div>
+    </div>
+    <div class="field"><label>E-mail</label><input id="ep-email" type="email" value="${p.email||''}"></div>
+    <div class="field"><label>Observações</label><textarea id="ep-notes">${p.notes||''}</textarea></div>
+    <button class="btn-primary" onclick="saveEditPatient('${id}')">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveEditPatient(id){
+  const p=state.patients.find(x=>x.id===id);if(!p)return;
+  p.name=document.getElementById('ep-name').value.trim()||p.name;
+  p.phone=document.getElementById('ep-phone').value.trim();
+  p.cpf=document.getElementById('ep-cpf').value.trim();
+  p.email=document.getElementById('ep-email').value.trim();
+  p.notes=document.getElementById('ep-notes').value;
+  saveState();closeSheet();showToast('Atualizado ✓');expandedPat=null;renderApp();
+}
+function deletePatient(id){
+  if(!confirm('Excluir este paciente?'))return;
+  state.patients=state.patients.filter(p=>p.id!==id);
+  expandedPat=null;saveState();renderApp();showToast('Excluído');
+}
+
+// ═══════════════════════════════════════════════
+// ESTOQUE
+// ═══════════════════════════════════════════════
+function renderInventory(){
+  const search=searchInv.toLowerCase();
+  const shown=(search?state.inventory.filter(i=>i.name.toLowerCase().includes(search)):state.inventory)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  const totalValue=state.inventory.reduce((s,i)=>s+(i.quantity*(i.unitCost||0)),0);
+  const lowCount=state.inventory.filter(i=>i.quantity<=i.minQuantity).length;
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>Estoque</h1><span>Insumos e materiais</span></div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-card gold"><div class="sc-label">Valor em Estoque</div><div class="sc-value">${fmt(totalValue)}</div><div class="sc-sub">${state.inventory.length} itens</div></div>
+      <div class="sum-card ${lowCount>0?'red':'green'}"><div class="sc-label">Estoque Baixo</div><div class="sc-value">${lowCount}</div><div class="sc-sub">abaixo do mínimo</div></div>
+    </div>
+    <div class="search-wrap"><input class="search-input" placeholder="Buscar produto…" value="${searchInv}" oninput="searchInv=this.value;renderApp()"></div>
+    <div style="padding:12px 20px 0;">
+      ${shown.length===0?`<div class="empty-state"><div class="es-icon">📦</div><div class="es-title">Estoque vazio</div><div class="es-sub">Cadastre insumos e materiais</div></div>`:''}
+      ${shown.map(item=>{
+        const isLow=item.quantity<=item.minQuantity;
+        const exp=expandedInv===item.id;
+        return`<div class="inv-card" onclick="expandedInv=expandedInv==='${item.id}'?null:'${item.id}';renderApp()">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div>
+              <div class="inv-name">${item.name}</div>
+              <div class="inv-meta">${item.category} · ${item.unit||'un'}</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="inv-qty ${isLow?'inv-low':'inv-ok'}">${item.quantity} ${item.unit||'un'}</div>
+              <div style="font-size:10px;color:var(--text-light);">${item.unitCost?fmt(item.unitCost)+'/un':''}</div>
+            </div>
+          </div>
+          ${isLow?`<div style="margin-top:6px;"><span style="font-size:10px;font-weight:600;color:var(--danger);background:var(--danger-bg);padding:2px 8px;border-radius:20px;border:1px solid var(--danger-brd);">⚠ Estoque baixo — mín. ${item.minQuantity}</span></div>`:''}
+          ${exp?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--nude);">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+              <div style="flex:1;background:var(--bg);border-radius:var(--r-sm);padding:8px;text-align:center;">
+                <div style="font-size:11px;color:var(--text-mid);">Estoque atual</div><div style="font-size:16px;font-weight:700;color:${isLow?'var(--danger)':'var(--text)'};">${item.quantity}</div></div>
+              <div style="flex:1;background:var(--bg);border-radius:var(--r-sm);padding:8px;text-align:center;">
+                <div style="font-size:11px;color:var(--text-mid);">Mínimo</div><div style="font-size:16px;font-weight:700;">${item.minQuantity}</div></div>
+              <div style="flex:1;background:var(--bg);border-radius:var(--r-sm);padding:8px;text-align:center;">
+                <div style="font-size:11px;color:var(--text-mid);">Valor total</div><div style="font-size:14px;font-weight:700;color:var(--gold);">${fmt(item.quantity*(item.unitCost||0))}</div></div>
+            </div>
+            ${item.notes?`<div style="font-size:12px;color:var(--text-mid);margin-bottom:8px;">${item.notes}</div>`:''}
+            <div class="card-actions-row">
+              <button class="action-btn pay-btn" onclick="event.stopPropagation();openInventoryMove('${item.id}','entrada')">+ Entrada</button>
+              <button class="action-btn partial-btn" onclick="event.stopPropagation();openInventoryMove('${item.id}','saida')">- Saída</button>
+              <button class="action-btn edit" onclick="event.stopPropagation();openEditInventory('${item.id}')">Editar</button>
+              <button class="action-btn del" onclick="event.stopPropagation();deleteInventory('${item.id}')">Excluir</button>
+            </div>
+          </div>`:''}
+        </div>`;}).join('')}
+    </div>
+    <button class="fab" onclick="openNewInventory()">${svgPlus}</button>`;
+}
+function openNewInventory(){
+  openSheet(`<div class="sheet-title">Novo Item de Estoque</div><div class="sheet-body">
+    <div class="field"><label>Nome do produto *</label><input id="ni-name" placeholder="Ex.: Dysport 500U, Juvederm…"></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="ni-cat">
+        ${INV_CATEGORIES.map(c=>`<option>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Unidade</label><input id="ni-unit" placeholder="un, ml, cx, amp" value="un"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Qtd. inicial</label><input type="number" id="ni-qty" placeholder="0" min="0" step="0.01"></div>
+      <div class="field"><label>Qtd. mínima</label><input type="number" id="ni-min" placeholder="1" min="0" step="0.01"></div>
+    </div>
+    <div class="field"><label>Custo unitário (R$)</label><input type="number" id="ni-cost" placeholder="0,00" step="0.01" min="0"></div>
+    <div class="field"><label>Observações</label><textarea id="ni-notes" placeholder="Validade, lote, fornecedor…"></textarea></div>
+    <button class="btn-primary" onclick="saveNewInventory()">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveNewInventory(){
+  const name=document.getElementById('ni-name').value.trim();
+  if(!name){showToast('Informe o nome');return;}
+  state.inventory.push({id:uid(),name,category:document.getElementById('ni-cat').value,
+    unit:document.getElementById('ni-unit').value||'un',
+    quantity:parseFloat(document.getElementById('ni-qty').value)||0,
+    minQuantity:parseFloat(document.getElementById('ni-min').value)||1,
+    unitCost:parseFloat(document.getElementById('ni-cost').value)||0,
+    notes:document.getElementById('ni-notes').value});
+  saveState();closeSheet();showToast('Item cadastrado ✓');renderApp();
+}
+function openInventoryMove(id,tipo){
+  const item=state.inventory.find(x=>x.id===id);if(!item)return;
+  openSheet(`<div class="sheet-title">${tipo==='entrada'?'Entrada de Estoque':'Saída de Estoque'}</div><div class="sheet-body">
+    <div style="font-size:13px;color:var(--text-mid);margin-bottom:12px;">${item.name} — Atual: <strong>${item.quantity} ${item.unit||'un'}</strong></div>
+    <div class="field"><label>Quantidade</label><input type="number" id="move-qty" placeholder="0" min="0.01" step="0.01"></div>
+    <div class="field"><label>Motivo (opcional)</label><input id="move-reason" placeholder="${tipo==='entrada'?'Compra, doação…':'Uso em procedimento, vencimento…'}"></div>
+    <button class="btn-primary" onclick="saveInventoryMove('${id}','${tipo}')">Confirmar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveInventoryMove(id,tipo){
+  const item=state.inventory.find(x=>x.id===id);if(!item)return;
+  const qty=parseFloat(document.getElementById('move-qty').value)||0;
+  if(qty<=0){showToast('Informe a quantidade');return;}
+  if(tipo==='entrada'){item.quantity=+(item.quantity+qty).toFixed(4);}
+  else{item.quantity=+Math.max(0,item.quantity-qty).toFixed(4);}
+  saveState();closeSheet();showToast(`${tipo==='entrada'?'Entrada':'Saída'} registrada ✓`);expandedInv=null;renderApp();
+}
+function openEditInventory(id){
+  const item=state.inventory.find(x=>x.id===id);if(!item)return;
+  openSheet(`<div class="sheet-title">Editar Item</div><div class="sheet-body">
+    <div class="field"><label>Nome</label><input id="ei-name" value="${item.name}"></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="ei-cat">
+        ${INV_CATEGORIES.map(c=>`<option ${c===item.category?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Unidade</label><input id="ei-unit" value="${item.unit||'un'}"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Qtd. atual</label><input type="number" id="ei-qty" value="${item.quantity}" step="0.01"></div>
+      <div class="field"><label>Qtd. mínima</label><input type="number" id="ei-min" value="${item.minQuantity}" step="0.01"></div>
+    </div>
+    <div class="field"><label>Custo unitário (R$)</label><input type="number" id="ei-cost" value="${item.unitCost||0}" step="0.01"></div>
+    <div class="field"><label>Observações</label><textarea id="ei-notes">${item.notes||''}</textarea></div>
+    <button class="btn-primary" onclick="saveEditInventory('${id}')">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveEditInventory(id){
+  const item=state.inventory.find(x=>x.id===id);if(!item)return;
+  item.name=document.getElementById('ei-name').value.trim()||item.name;
+  item.category=document.getElementById('ei-cat').value;
+  item.unit=document.getElementById('ei-unit').value||'un';
+  item.quantity=parseFloat(document.getElementById('ei-qty').value)||0;
+  item.minQuantity=parseFloat(document.getElementById('ei-min').value)||1;
+  item.unitCost=parseFloat(document.getElementById('ei-cost').value)||0;
+  item.notes=document.getElementById('ei-notes').value;
+  saveState();closeSheet();showToast('Atualizado ✓');expandedInv=null;renderApp();
+}
+function deleteInventory(id){
+  if(!confirm('Excluir este item?'))return;
+  state.inventory=state.inventory.filter(i=>i.id!==id);
+  expandedInv=null;saveState();renderApp();showToast('Excluído');
+}
+
+// ═══════════════════════════════════════════════
+// PROFISSIONAIS + COMISSÕES
+// ═══════════════════════════════════════════════
+function renderProfessionals(){
+  const mesEntradas=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth);
+  const totalEquipe=mesEntradas.reduce((s,e)=>s+e.amount,0);
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>Profissionais</h1><span>Equipe e comissões — ${monthName(viewMonth)}</span></div>
+        <div class="month-nav"><button onclick="prevMonth()">‹</button><span class="month-name">${monthName(viewMonth)}</span><button onclick="nextMonth()">›</button></div>
+      </div>
+    </div>
+    <div class="section" style="margin-bottom:4px;">
+      <div style="background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);">
+        <div style="font-size:11px;color:var(--text-mid);">Produção Total da Equipe no Mês</div>
+        <div style="font-size:22px;font-weight:700;color:var(--text);margin-top:2px;">${fmt(totalEquipe)}</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px;">${mesEntradas.length} procedimentos</div>
+      </div>
+    </div>
+    <div class="pro-cards">
+      ${state.professionals.map(pro=>{
+        const proEntradas=mesEntradas.filter(e=>e.professionalId===pro.id);
+        const producao=proEntradas.reduce((s,e)=>s+e.amount,0);
+        const comissaoValor=pro.commission>0?+(producao*pro.commission/100).toFixed(2):0;
+        return`<div class="pro-card">
+          <div class="pro-header">
+            <div class="pro-avatar" style="background:${pro.color}">${pro.name.charAt(0)}</div>
+            <div><div class="pro-name">${pro.name}</div><div class="pro-role">${pro.role||'Profissional'}</div></div>
+          </div>
+          <div class="pro-stats">
+            <div class="pro-stat"><div class="ps-val" style="color:var(--green)">${fmt(producao)}</div><div class="ps-lbl">Produção</div></div>
+            <div class="pro-stat"><div class="ps-val" style="color:var(--mauve)">${pro.commission}%</div><div class="ps-lbl">Comissão</div></div>
+            <div class="pro-stat"><div class="ps-val">${proEntradas.length}</div><div class="ps-lbl">Procedim.</div></div>
+          </div>
+          ${pro.commission>0?`<div class="comm-box">
+            <div class="comm-box-title">Comissão a Pagar</div>
+            <div class="comm-row"><span class="comm-label">Produção no mês</span><span class="comm-value">${fmt(producao)}</span></div>
+            <div class="comm-row"><span class="comm-label">Taxa de comissão</span><span class="comm-value">${pro.commission}%</span></div>
+            <div class="comm-row" style="border-top:1px solid var(--mauve-brd);margin-top:6px;padding-top:6px;">
+              <span class="comm-label" style="font-weight:700;color:var(--text);">Valor a pagar</span>
+              <span class="comm-value" style="font-size:16px;">${fmt(comissaoValor)}</span>
+            </div>
+            ${comissaoValor>0?`<button onclick="lancarComissao('${pro.id}','${pro.name}',${comissaoValor})" style="margin-top:10px;width:100%;padding:9px;border-radius:var(--r-sm);border:1.5px solid var(--mauve-brd);background:transparent;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:var(--mauve);cursor:pointer;">Lançar como Despesa</button>`:''}
+          </div>`:`<div style="margin-top:12px;font-size:12px;color:var(--text-mid);line-height:1.5;">Sem comissão sobre procedimentos. Remuneração via pró-labore.</div>`}
+          <button class="pro-edit-btn" onclick="openEditProfessional('${pro.id}')">Editar Profissional</button>
+        </div>`;}).join('')}
+      <button onclick="openNewProfessional()" style="padding:14px;border-radius:var(--r);border:2px dashed var(--nude);background:transparent;font-family:'Poppins',sans-serif;font-size:14px;font-weight:500;color:var(--text-mid);cursor:pointer;width:100%;">+ Adicionar Profissional</button>
+    </div>`;
+}
+function lancarComissao(proId,proName,valor){
+  if(!confirm(`Lançar comissão de ${fmt(valor)} para ${proName} como despesa em Folha/Pró-labore?`))return;
+  state.payables.push({id:uid(),desc:`Comissão ${proName} — ${monthName(viewMonth)}`,category:'Folha/Pró-labore',
+    amount:valor,dueDate:today(),supplierId:'',supplierName:'',paid:false,paidDate:null,notes:'Comissão calculada automaticamente',
+    card:null,account:'',reconciled:false});
+  saveState();showToast('Despesa de comissão lançada ✓');navigate('payables');
+}
+function openNewProfessional(){
+  openSheet(`<div class="sheet-title">Novo Profissional</div><div class="sheet-body">
+    <div class="field"><label>Nome *</label><input id="newpro-name" placeholder="Nome completo"></div>
+    <div class="field"><label>Cargo / Função</label><input id="newpro-role" placeholder="Esteticista, Biomédico…"></div>
+    <div class="field"><label>Comissão (%)</label>
+      <input type="number" id="newpro-comm" value="0" min="0" max="100" step="1">
+      <div style="font-size:11px;color:var(--text-mid);margin-top:4px;">0% = sem comissão (pró-labore)</div></div>
+    <button class="btn-primary" onclick="saveNewProfessional()">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveNewProfessional(){
+  const name=document.getElementById('newpro-name').value.trim();
+  if(!name){showToast('Informe o nome');return;}
+  const colors=['#9B7FA6','#B8857A','#5A9E8A','#C9A96E','#D4854A','#4A90D4'];
+  state.professionals.push({id:uid(),name,role:document.getElementById('newpro-role').value.trim(),
+    commission:parseFloat(document.getElementById('newpro-comm').value)||0,
+    color:colors[state.professionals.length%colors.length]});
+  saveState();closeSheet();showToast('Profissional adicionado ✓');renderApp();
+}
+function openEditProfessional(id){
+  const pro=state.professionals.find(p=>p.id===id);if(!pro)return;
+  openSheet(`<div class="sheet-title">Editar Profissional</div><div class="sheet-body">
+    <div class="field"><label>Nome</label><input id="pro-name" value="${pro.name}"></div>
+    <div class="field"><label>Cargo / Função</label><input id="pro-role" value="${pro.role||''}"></div>
+    <div class="field"><label>Comissão (%)</label>
+      <input type="number" id="pro-comm" value="${pro.commission}" min="0" max="100" step="1">
+      <div style="font-size:11px;color:var(--text-mid);margin-top:4px;">0% = sem comissão</div></div>
+    <button class="btn-primary" onclick="saveEditProfessional('${id}')">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveEditProfessional(id){
+  const pro=state.professionals.find(p=>p.id===id);if(!pro)return;
+  pro.name=document.getElementById('pro-name').value.trim()||pro.name;
+  pro.role=document.getElementById('pro-role').value.trim();
+  pro.commission=parseFloat(document.getElementById('pro-comm').value)||0;
+  saveState();closeSheet();showToast('Profissional atualizado ✓');renderApp();
+}
+
+// ═══════════════════════════════════════════════
+// EXPORTAR / RELATÓRIOS
+// ═══════════════════════════════════════════════
+function renderReports(){
+  return`
+    <div class="header">
+      <div class="header-row"><div class="header-titles"><h1>Exportar & Relatórios</h1><span>Backup e dados para contabilidade</span></div></div>
+    </div>
+    <div style="padding:16px 20px 0;">
+      <div class="section-title">Exportar CSV</div>
+      <button class="export-btn" onclick="exportCSV('entries')"><span class="eb-icon">📥</span><div><span>Exportar Entradas</span><span class="eb-sub">Todas as receitas em CSV</span></div></button>
+      <button class="export-btn" onclick="exportCSV('payables')"><span class="eb-icon">📤</span><div><span>Exportar Despesas</span><span class="eb-sub">Contas a pagar em CSV</span></div></button>
+      <div class="section-title" style="margin-top:16px;">Backup Completo</div>
+      <button class="export-btn" onclick="exportBackup()"><span class="eb-icon">💾</span><div><span>Backup JSON</span><span class="eb-sub">Exportar todos os dados do sistema</span></div></button>
+      <button class="export-btn" onclick="importBackupPrompt()"><span class="eb-icon">📂</span><div><span>Restaurar Backup</span><span class="eb-sub">Importar arquivo JSON de backup</span></div></button>
+      <div class="section-title" style="margin-top:16px;">Relatório DRE</div>
+      <button class="export-btn" onclick="navigate('dre')"><span class="eb-icon">📊</span><div><span>Ver DRE</span><span class="eb-sub">Demonstrativo de Resultado do Exercício</span></div></button>
+      <button class="export-btn" onclick="openDREPrint()"><span class="eb-icon">🖨️</span><div><span>Imprimir DRE</span><span class="eb-sub">Gerar DRE para impressão/PDF</span></div></button>
+      <input type="file" id="backup-file-input" accept=".json" style="display:none" onchange="handleBackupImport(event)">
+    </div>`;
+}
+function toCSV(rows){
+  if(!rows.length)return'';
+  const keys=Object.keys(rows[0]);
+  const escape=v=>{const s=String(v===null||v===undefined?'':v);return s.includes(',')||s.includes('"')||s.includes('\n')?`"${s.replace(/"/g,'""')}"`:s;};
+  return[keys.join(','),...rows.map(r=>keys.map(k=>escape(r[k])).join(','))].join('\n');
+}
+function downloadFile(content,filename,type){
+  const a=document.createElement('a');const blob=new Blob([content],{type});a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+function exportCSV(type){
+  let rows=[];let filename='';
+  if(type==='entries'){
+    rows=(state.entries||[]).map(e=>({Data:e.date,Descrição:e.desc,Valor:e.amount,Pagamento:e.paymentMethod,Cartão:e.paymentCard||'',Categoria:e.category||'',Profissional:e.professionalId?getProfessional(e.professionalId).name:'',Paciente:e.patientId?((getPatient(e.patientId)||{}).name||''):'',Observações:e.notes||''}));
+    filename=`entradas_${today()}.csv`;
+  }else if(type==='payables'){
+    rows=state.payables.map(p=>({Data_Vencimento:p.dueDate,Descrição:p.desc,Categoria:p.category,Valor:p.amount,Status:p.paid?'Pago':'Pendente',Data_Pagamento:p.paidDate||'',Fornecedor:p.supplierName||'',Cartão:p.card||'',Conta:p.account||'',Conciliado:p.reconciled?'Sim':'Não',Observações:p.notes||''}));
+    filename=`despesas_${today()}.csv`;
+  }
+  if(!rows.length){showToast('Nenhum dado para exportar');return;}
+  downloadFile('\ufeff'+toCSV(rows),filename,'text/csv;charset=utf-8');
+  showToast('CSV exportado ✓');
+}
+function exportBackup(){
+  const json=JSON.stringify(state,null,2);
+  downloadFile(json,`backup_bpo_${today()}.json`,'application/json');
+  showToast('Backup exportado ✓');
+}
+function importBackupPrompt(){document.getElementById('backup-file-input').click();}
+function handleBackupImport(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.settings&&!data.entries&&!data.payables){showToast('Arquivo inválido');return;}
+      if(!confirm('Isso substituirá TODOS os dados atuais. Continuar?'))return;
+      state=data;
+      if(!state.patients)state.patients=[];
+      if(!state.inventory)state.inventory=[];
+      saveState();showToast('Backup restaurado ✓');navigate('dashboard');
+    }catch(err){showToast('Erro ao ler arquivo');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+function openDREPrint(){
+  const pays=state.payables;
+  const receitaBruta=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth).reduce((s,e)=>s+e.amount,0);
+  const paidPays=pays.filter(p=>p.paid&&p.paidDate&&monthKey(p.paidDate)===viewMonth);
+  const totalDespesas=paidPays.reduce((s,p)=>s+p.amount,0);
+  const byCat={};paidPays.forEach(p=>{byCat[p.category]=(byCat[p.category]||0)+p.amount;});
+  const resultado=receitaBruta-totalDespesas;
+  const margem=receitaBruta>0?(resultado/receitaBruta*100).toFixed(1):0;
+  openSheet(`<div class="sheet-title">DRE — ${monthName(viewMonth)}</div><div class="sheet-body">
+    <div style="font-family:monospace;font-size:13px;line-height:1.8;white-space:pre;background:var(--bg);border-radius:var(--r-sm);padding:14px;border:1px solid var(--nude);overflow-x:auto;">
+${state.settings.clinicName}
+DRE — ${monthName(viewMonth)}
+${'─'.repeat(40)}
+(+) Receita Bruta          ${fmt(receitaBruta).padStart(14)}
+
+DESPESAS OPERACIONAIS:
+${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`(-) ${cat.padEnd(22)} ${fmt(val).padStart(14)}`).join('\n')}
+${'─'.repeat(40)}
+(=) Total Despesas         ${fmt(totalDespesas).padStart(14)}
+${'─'.repeat(40)}
+(=) RESULTADO              ${fmt(resultado).padStart(14)}
+    Margem Operacional     ${(margem+'%').padStart(14)}
+${'─'.repeat(40)}</div>
+    <button class="btn-primary" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+    <button class="btn-secondary" onclick="closeSheet()">Fechar</button>
+  </div>`);
+}
+
+// ═══════════════════════════════════════════════
+// PAYABLES (A/PAGAR)
+// ═══════════════════════════════════════════════
+function renderPayables(){
+  const todayStr=today();
+  let pays=state.payables.filter(p=>monthKey(p.dueDate)===viewMonth);
+  if(searchPay){pays=pays.filter(p=>p.desc.toLowerCase().includes(searchPay.toLowerCase()));}
+  if(payFilter!=='todos'){
+    if(payFilter==='pago')pays=pays.filter(p=>p.paid);
+    if(payFilter==='pendente')pays=pays.filter(p=>!p.paid&&p.dueDate>=todayStr);
+    if(payFilter==='vencido')pays=pays.filter(p=>!p.paid&&p.dueDate<todayStr);
+  }
+  pays=pays.sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const allMes=state.payables.filter(p=>monthKey(p.dueDate)===viewMonth);
+  const totalPago=allMes.filter(p=>p.paid).reduce((s,p)=>s+p.amount,0);
+  const totalPend=allMes.filter(p=>!p.paid).reduce((s,p)=>s+p.amount,0);
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>Contas a Pagar</h1><span>Despesas e obrigações</span></div>
+        <div class="month-nav"><button onclick="prevMonth()">‹</button><span class="month-name">${monthName(viewMonth)}</span><button onclick="nextMonth()">›</button></div>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-card red"><div class="sc-label">Pago</div><div class="sc-value">${fmt(totalPago)}</div></div>
+      <div class="sum-card gold"><div class="sc-label">A Pagar</div><div class="sc-value">${fmt(totalPend)}</div></div>
+    </div>
+    <div class="search-wrap"><input class="search-input" placeholder="Buscar despesa…" value="${searchPay}" oninput="searchPay=this.value;renderApp()"></div>
+    <div class="filter-bar">
+      ${['todos','pendente','vencido','pago'].map(f=>`<button class="chip ${payFilter===f?'active':''}" onclick="payFilter='${f}';renderApp()">${f.charAt(0).toUpperCase()+f.slice(1)}</button>`).join('')}
+      <button class="chip" onclick="openConciliacao()">Conciliar</button>
+    </div>
+    <div class="item-list">
+      ${pays.length===0?`<div class="empty-state"><div class="es-icon">💸</div><div class="es-title">Nenhuma despesa</div><div class="es-sub">Registre despesas da clínica</div></div>`:''}
+      ${pays.map(p=>{
+        const overdue=!p.paid&&p.dueDate<todayStr;
+        const st=p.paid?'pago':overdue?'vencido':'pendente';
+        const exp=expandedPay===p.id;
+        const instLabel=p.installmentGroup?(p.recurring?`<span class="recur-badge">↻ fixo</span>`:`<span style="font-size:10px;font-weight:600;color:var(--text-mid);">${p.installmentNumber}/${p.totalInstallments}</span>`):'';
+        const reconcLabel=p.paid&&p.reconciled?`<span style="font-size:10px;font-weight:600;color:var(--green);background:var(--green-bg);padding:2px 7px;border-radius:20px;border:1px solid var(--green-brd);">✓ conciliado</span>`:'';
+        return`<div class="item-card" onclick="expandedPay=expandedPay==='${p.id}'?null:'${p.id}';renderApp()">
+          <div class="ic-row">
+            <div class="ic-left">
+              <div class="ic-name">${p.desc} ${instLabel}</div>
+              <div class="ic-sub">${p.category}${p.supplierName?' · '+p.supplierName:''}${p.account?' · '+acctTagHTML(p.account):''}${p.card?' · '+cardTagHTML(p.card):''}</div>
+            </div>
+            <div class="ic-right">
+              <div class="ic-amount" style="color:${p.paid?'var(--green)':overdue?'var(--danger)':'var(--text)'}">${fmt(p.amount)}</div>
+              <div class="ic-date">Venc. ${fmtDate(p.dueDate)}</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">${badgeHTML(st)} ${reconcLabel}</div>
+          ${exp?`<div class="inst-list">
+            ${p.notes?`<div style="font-size:12px;color:var(--text-mid);padding:4px 0;">${p.notes}</div>`:''}
+            ${p.paidDate?`<div style="font-size:11px;color:var(--green);padding:2px 0;">Pago em ${fmtDate(p.paidDate)}</div>`:''}
+            <div class="card-actions-row">
+              ${!p.paid?`<button class="action-btn pay-btn" onclick="event.stopPropagation();payPayable('${p.id}')">✓ Pago</button>`
+                :`<button class="action-btn edit" onclick="event.stopPropagation();undoPayPayable('${p.id}')">Desfazer</button>`}
+              <button class="action-btn edit" style="${p.reconciled?'background:var(--green-bg);color:var(--green);':'background:var(--mauve-bg);color:var(--mauve);'}" onclick="event.stopPropagation();${p.reconciled?`unreconcilePayable('${p.id}')`:`reconcilePayable('${p.id}')`}">${p.reconciled?'✓ Conciliado':'Conciliar'}</button>
+              <button class="action-btn edit" onclick="event.stopPropagation();openEditPayable('${p.id}')">Editar</button>
+              <button class="action-btn del" onclick="event.stopPropagation();deletePayable('${p.id}')">Excluir</button>
+            </div>
+          </div>`:''}
+        </div>`;}).join('')}
+    </div>
+    <button class="fab red-fab" onclick="openNewPayable()">${svgPlus}</button>`;
+}
+
+function reconcilePayable(id){const p=state.payables.find(x=>x.id===id);if(!p)return;p.reconciled=true;saveState();renderApp();showToast('Conciliado ✓');}
+function unreconcilePayable(id){const p=state.payables.find(x=>x.id===id);if(!p)return;p.reconciled=false;saveState();renderApp();showToast('Marcação removida');}
+function payPayable(id){const p=state.payables.find(x=>x.id===id);if(!p)return;p.paid=true;p.paidDate=today();saveState();showToast(`${fmt(p.amount)} pago ✓`);renderApp();}
+function undoPayPayable(id){const p=state.payables.find(x=>x.id===id);if(!p)return;p.paid=false;p.paidDate=null;saveState();showToast('Desfeito');renderApp();}
+function deletePayable(id){
+  const p=state.payables.find(x=>x.id===id);if(!p)return;
+  if(p.installmentGroup){
+    const grp=state.payables.filter(x=>x.installmentGroup===p.installmentGroup);
+    const remaining=grp.filter(x=>!x.paid);
+    const msg=`Esta despesa faz parte de um parcelamento (${p.installmentNumber}/${p.totalInstallments}).\n\nO que deseja excluir?\n\nOK = Todas as ${remaining.length} parcelas não pagas\nCancelar = Só esta parcela`;
+    if(confirm(msg)){
+      state.payables=state.payables.filter(x=>x.installmentGroup!==p.installmentGroup||x.paid);
+      showToast(`${remaining.length} parcelas excluídas`);
+    }else{
+      if(!confirm('Excluir só esta parcela?'))return;
+      state.payables=state.payables.filter(x=>x.id!==id);
+      showToast('Parcela excluída');
+    }
+  }else{
+    if(!confirm('Excluir esta despesa?'))return;
+    state.payables=state.payables.filter(x=>x.id!==id);
+    showToast('Excluído');
+  }
+  expandedPay=null;saveState();renderApp();
+}
+
+function openConciliacao(){
+  const pays=state.payables.filter(p=>monthKey(p.dueDate)===viewMonth);
+  const html=ACCOUNTS.map(acc=>{
+    const ap=pays.filter(p=>p.account===acc.id);if(!ap.length)return'';
+    const paidList=ap.filter(p=>p.paid);const totalPaid=paidList.reduce((s,p)=>s+p.amount,0);
+    const reconList=paidList.filter(p=>p.reconciled);const totalRecon=reconList.reduce((s,p)=>s+p.amount,0);
+    const pendRecon=paidList.filter(p=>!p.reconciled);
+    return`<div style="background:var(--surface);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:var(--sh);">
+      <div style="font-weight:700;font-size:14px;margin-bottom:10px;">🏦 ${acc.name}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px;text-align:center;">
+        <div><div style="font-size:10px;color:var(--green);">Conciliado</div><div style="font-size:13px;font-weight:700;color:var(--green);">${fmt(totalRecon)}</div></div>
+        <div><div style="font-size:10px;color:var(--warn);">A conciliar</div><div style="font-size:13px;font-weight:700;color:var(--warn);">${fmt(totalPaid-totalRecon)}</div></div>
+      </div>
+      ${pendRecon.length?`<div style="font-size:11px;font-weight:600;color:var(--text-mid);margin-bottom:6px;">Aguardando confirmação:</div>
+        ${pendRecon.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--nude);">
+          <div><div style="font-size:12px;font-weight:500;">${p.desc}</div><div style="font-size:11px;color:var(--text-mid);">Venc. ${fmtDate(p.dueDate)} · ${fmt(p.amount)}</div></div>
+          <button onclick="reconcilePayable('${p.id}')" style="background:var(--green-bg);color:var(--green);border:none;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">✓ OK</button>
+        </div>`).join('')}`:`<div style="font-size:12px;color:var(--green);text-align:center;padding:8px 0;">✓ Tudo conciliado</div>`}
+    </div>`;
+  }).filter(Boolean).join('');
+  openSheet(`<div class="sheet-title">Conciliação Bancária</div><div class="sheet-body">
+    <div style="font-size:12px;color:var(--text-mid);margin-bottom:14px;">Mês: <strong>${monthName(viewMonth)}</strong></div>
+    ${html||'<div style="text-align:center;padding:24px;color:var(--text-mid);">Nenhum lançamento com conta informada.</div>'}
+  </div>`);
+}
+
+// ═══════════════════════════════════════════════
+// PAYABLE FORMS
+// ═══════════════════════════════════════════════
+let payTipoSel='avista';let payPagoSel='nao';let payCardSel='';
+let payFixFormaSel='pix';let payFixCardSel='';
+let payAVistaFormaSel='pix';let payAVistaCardSel='';
+
+function openNewPayable(){
+  const catOpts=state.payCategories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  const supOpts=state.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  payTipoSel='avista';payPagoSel='nao';payCardSel='';payFixFormaSel='pix';payFixCardSel='';payAVistaFormaSel='pix';payAVistaCardSel='';
+  openSheet(`<div class="sheet-title">Nova Despesa</div><div class="sheet-body">
+    <div class="field"><label>Descrição</label><input id="pay-desc" placeholder="Ex.: Aluguel Maio, Produto XYZ"></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="pay-cat">${catOpts}</select></div>
+      <div class="field"><label>Valor Total (R$)</label><input type="number" id="pay-amount" placeholder="0,00" step="0.01" min="0"></div>
+    </div>
+    <div class="field"><label>Tipo de pagamento</label>
+      <div class="radio-group">
+        <label class="radio-opt selected" id="tipo-avista" onclick="selectPayTipo('avista')" style="flex:1 1 calc(50% - 3px);">À Vista</label>
+        <label class="radio-opt" id="tipo-parcelado" onclick="selectPayTipo('parcelado')" style="flex:1 1 calc(50% - 3px);">Parcelado Cartão</label>
+        <label class="radio-opt" id="tipo-parcelado-boleto" onclick="selectPayTipo('parcelado-boleto')" style="flex:1 1 calc(50% - 3px);">Parcelado Boleto</label>
+        <label class="radio-opt" id="tipo-fixo" onclick="selectPayTipo('fixo')" style="flex:1 1 calc(50% - 3px);">↻ Fixo Mensal</label>
+      </div></div>
+    <div id="avista-wrap">
+      <div class="field-row">
+        <div class="field"><label>Vencimento / Data</label><input type="date" id="pay-due" value="${today()}"></div>
+        <div class="field"><label>Fornecedor (opcional)</label><select id="pay-sup"><option value="">Nenhum</option>${supOpts}</select></div>
+      </div>
+      <div class="field"><label>Conta de origem</label><select id="av-account"><option value="">Selecione…</option>${ACCOUNTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Forma de pagamento</label>
+        <div class="radio-group">
+          <label class="radio-opt selected" id="av-forma-pix" onclick="selectAVistaForma('pix')" style="flex:1 1 calc(50% - 3px);">PIX</label>
+          <label class="radio-opt" id="av-forma-boleto" onclick="selectAVistaForma('boleto')" style="flex:1 1 calc(50% - 3px);">Boleto</label>
+          <label class="radio-opt" id="av-forma-credito" onclick="selectAVistaForma('credito')" style="flex:1 1 calc(50% - 3px);">Crédito</label>
+          <label class="radio-opt" id="av-forma-debito" onclick="selectAVistaForma('debito')" style="flex:1 1 calc(50% - 3px);">Débito</label>
+        </div></div>
+      <div id="av-card-wrap" style="display:none;" class="field"><label>Cartão</label>
+        <div class="radio-group">${CARDS.map(c=>`<label class="radio-opt ${c.cls}" id="av-card-opt-${c.id}" onclick="selectAVistaCard('${c.id}')" style="flex:0 0 calc(50% - 3px);">${c.name}</label>`).join('')}</div></div>
+      <div class="field"><label>Já pago?</label>
+        <div class="radio-group">
+          <label class="radio-opt" id="pay-opt-sim" onclick="selectPayPago('sim')">Sim</label>
+          <label class="radio-opt selected" id="pay-opt-nao" onclick="selectPayPago('nao')">Não</label>
+        </div></div>
+      <div id="pay-pago-wrap" style="display:none;" class="field"><label>Data de pagamento</label><input type="date" id="pay-paid-date" value="${today()}"></div>
+    </div>
+    <div id="fixo-wrap" style="display:none;">
+      <div class="field-row">
+        <div class="field"><label>Dia do vencimento</label><select id="pay-fix-day">${Array.from({length:28},(_,i)=>`<option value="${i+1}"${i===9?' selected':''}>${i+1}</option>`).join('')}</select></div>
+        <div class="field"><label>Mês inicial</label><input type="month" id="pay-fix-start" value="${viewMonth}"></div>
+      </div>
+      <div class="field"><label>Gerar para quantos meses</label><select id="pay-fix-months"><option value="1">1 mês</option><option value="3">3 meses</option><option value="6">6 meses</option><option value="12" selected>12 meses</option><option value="24">24 meses</option></select></div>
+      <div class="field"><label>Conta de origem</label><select id="fix-account"><option value="">Selecione…</option>${ACCOUNTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Forma de pagamento</label>
+        <div class="radio-group">
+          <label class="radio-opt selected" id="fix-forma-pix" onclick="selectFixForma('pix')" style="flex:1 1 calc(50% - 3px);">PIX</label>
+          <label class="radio-opt" id="fix-forma-boleto" onclick="selectFixForma('boleto')" style="flex:1 1 calc(50% - 3px);">Boleto</label>
+          <label class="radio-opt" id="fix-forma-credito" onclick="selectFixForma('credito')" style="flex:1 1 calc(50% - 3px);">Crédito</label>
+          <label class="radio-opt" id="fix-forma-debito" onclick="selectFixForma('debito')" style="flex:1 1 calc(50% - 3px);">Débito</label>
+        </div></div>
+      <div id="fix-card-wrap" style="display:none;" class="field"><label>Cartão</label>
+        <div class="radio-group">${CARDS.map(c=>`<label class="radio-opt ${c.cls}" id="fix-card-opt-${c.id}" onclick="selectFixCard('${c.id}')" style="flex:0 0 calc(50% - 3px);">${c.name}</label>`).join('')}</div></div>
+      <div class="field"><label>Fornecedor (opcional)</label><select id="pay-fix-sup"><option value="">Nenhum</option>${supOpts}</select></div>
+    </div>
+    <div id="parcelado-boleto-wrap" style="display:none;">
+      <div class="field"><label>Conta de origem</label><select id="pay-account-b"><option value="">Selecione…</option>${ACCOUNTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
+      <div class="field-row">
+        <div class="field"><label>Nº de boletos</label><select id="pay-boleto-count">${[2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}">${n}x</option>`).join('')}</select></div>
+        <div class="field"><label>Venc. 1º boleto</label><input type="date" id="pay-boleto-first-due" value="${addDays(today(),30)}"></div>
+      </div>
+      <div class="field"><label>Fornecedor (opcional)</label><select id="pay-sup-b"><option value="">Nenhum</option>${supOpts}</select></div>
+    </div>
+    <div id="parcelado-wrap" style="display:none;">
+      <div class="field"><label>Conta de origem</label><select id="pay-account-p"><option value="">Selecione…</option>${ACCOUNTS.map(a=>`<option value="${a.id}">${a.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Cartão utilizado</label>
+        <div class="radio-group">${CARDS.map(c=>`<label class="radio-opt ${c.cls}" id="card-opt-${c.id}" onclick="selectCard('${c.id}')" style="flex:0 0 calc(50% - 3px);">${c.name}</label>`).join('')}</div></div>
+      <div class="field-row">
+        <div class="field"><label>Nº de parcelas</label><select id="pay-inst-count">${[2,3,4,5,6,7,8,9,10,11,12].map(n=>`<option value="${n}">${n}x</option>`).join('')}</select></div>
+        <div class="field"><label>Venc. 1ª parcela</label><input type="date" id="pay-first-due" value="${addDays(today(),30)}"></div>
+      </div>
+      <div class="field"><label>Fornecedor (opcional)</label><select id="pay-sup-p"><option value="">Nenhum</option>${supOpts}</select></div>
+    </div>
+    <div class="field"><label>Observações</label><textarea id="pay-notes" placeholder="Detalhes adicionais…"></textarea></div>
+    <button class="btn-primary" onclick="saveNewPayable()">Salvar Despesa</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+
+function selectPayTipo(v){payTipoSel=v;['avista','parcelado','parcelado-boleto','fixo'].forEach(t=>{const el=document.getElementById(`tipo-${t}`);if(el)el.classList.toggle('selected',t===v);});document.getElementById('avista-wrap').style.display=v==='avista'?'block':'none';document.getElementById('parcelado-wrap').style.display=v==='parcelado'?'block':'none';document.getElementById('parcelado-boleto-wrap').style.display=v==='parcelado-boleto'?'block':'none';document.getElementById('fixo-wrap').style.display=v==='fixo'?'block':'none';}
+function selectPayPago(v){payPagoSel=v;document.getElementById('pay-opt-sim').classList.toggle('selected',v==='sim');document.getElementById('pay-opt-nao').classList.toggle('selected',v==='nao');document.getElementById('pay-pago-wrap').style.display=v==='sim'?'block':'none';}
+function selectCard(id){payCardSel=id;CARDS.forEach(c=>{const el=document.getElementById(`card-opt-${c.id}`);if(el)el.classList.toggle('selected',c.id===id);});}
+function selectAVistaForma(id){payAVistaFormaSel=id;payAVistaCardSel='';['pix','boleto','credito','debito'].forEach(f=>{const el=document.getElementById(`av-forma-${f}`);if(el)el.classList.toggle('selected',f===id);});const needCard=id==='credito'||id==='debito';document.getElementById('av-card-wrap').style.display=needCard?'block':'none';if(!needCard)CARDS.forEach(c=>{const el=document.getElementById(`av-card-opt-${c.id}`);if(el)el.classList.remove('selected');});}
+function selectAVistaCard(id){payAVistaCardSel=id;CARDS.forEach(c=>{const el=document.getElementById(`av-card-opt-${c.id}`);if(el)el.classList.toggle('selected',c.id===id);});}
+function selectFixForma(id){payFixFormaSel=id;payFixCardSel='';['pix','boleto','credito','debito'].forEach(f=>{const el=document.getElementById(`fix-forma-${f}`);if(el)el.classList.toggle('selected',f===id);});const needCard=id==='credito'||id==='debito';document.getElementById('fix-card-wrap').style.display=needCard?'block':'none';if(!needCard)CARDS.forEach(c=>{const el=document.getElementById(`fix-card-opt-${c.id}`);if(el)el.classList.remove('selected');});}
+function selectFixCard(id){payFixCardSel=id;CARDS.forEach(c=>{const el=document.getElementById(`fix-card-opt-${c.id}`);if(el)el.classList.toggle('selected',c.id===id);});}
+
+function saveNewPayable(){
+  const desc=document.getElementById('pay-desc').value.trim();
+  const cat=document.getElementById('pay-cat').value;
+  const amount=parseFloat(document.getElementById('pay-amount').value)||0;
+  const notes=document.getElementById('pay-notes').value;
+  if(!desc){showToast('Informe a descrição');return;}
+  if(amount<=0){showToast('Informe o valor');return;}
+  if(payTipoSel==='fixo'){
+    const day=parseInt(document.getElementById('pay-fix-day').value)||10;
+    const start=document.getElementById('pay-fix-start').value;
+    const months=parseInt(document.getElementById('pay-fix-months').value)||12;
+    const supId=document.getElementById('pay-fix-sup').value;
+    const supName=supId?(state.suppliers.find(s=>s.id===supId)?.name||''):'';
+    if(!start){showToast('Informe o mês inicial');return;}
+    const needCard=payFixFormaSel==='credito'||payFixFormaSel==='debito';
+    if(needCard&&!payFixCardSel){showToast('Selecione o cartão');return;}
+    const fixAccount=document.getElementById('fix-account').value;
+    const[sy,sm]=start.split('-').map(Number);
+    const grpId=uid();const fixCard=needCard?payFixCardSel:null;
+    for(let i=0;i<months;i++){
+      const y2=Math.floor((sm-1+i)/12)+sy;const m2=((sm-1+i)%12)+1;
+      const lastDay=new Date(y2,m2,0).getDate();const d2=Math.min(day,lastDay);
+      const dueDate=`${y2}-${String(m2).padStart(2,'0')}-${String(d2).padStart(2,'0')}`;
+      state.payables.push({id:uid(),desc,category:cat,amount,dueDate,supplierId:supId,supplierName:supName,paid:false,paidDate:null,notes,card:fixCard,account:fixAccount,recurring:true,reconciled:false,installmentGroup:grpId,installmentNumber:i+1,totalInstallments:months});
+    }
+    saveState();closeSheet();showToast(`${months} meses criados ↻`);renderApp();
+  }else if(payTipoSel==='parcelado-boleto'){
+    const firstDue=document.getElementById('pay-boleto-first-due').value;
+    if(!firstDue){showToast('Informe a data do 1º boleto');return;}
+    const n=parseInt(document.getElementById('pay-boleto-count').value)||2;
+    const supId=document.getElementById('pay-sup-b').value;
+    const supName=supId?(state.suppliers.find(s=>s.id===supId)?.name||''):'';
+    const account=document.getElementById('pay-account-b').value;
+    const instAmt=+(amount/n).toFixed(2);const lastAmt=+(amount-instAmt*(n-1)).toFixed(2);
+    const grpId=uid();
+    for(let i=0;i<n;i++){state.payables.push({id:uid(),desc,category:cat,amount:i===n-1?lastAmt:instAmt,dueDate:addMonths(firstDue,i),supplierId:supId,supplierName:supName,paid:false,paidDate:null,notes,card:null,account,reconciled:false,installmentGroup:grpId,installmentNumber:i+1,totalInstallments:n});}
+    saveState();closeSheet();showToast(`${n} boletos criados ✓`);renderApp();
+  }else if(payTipoSel==='parcelado'){
+    if(!payCardSel){showToast('Selecione o cartão');return;}
+    const firstDue=document.getElementById('pay-first-due').value;
+    if(!firstDue){showToast('Informe a data da 1ª parcela');return;}
+    const n=parseInt(document.getElementById('pay-inst-count').value)||2;
+    const supId=document.getElementById('pay-sup-p').value;
+    const supName=supId?(state.suppliers.find(s=>s.id===supId)?.name||''):'';
+    const account=document.getElementById('pay-account-p').value;
+    const instAmt=+(amount/n).toFixed(2);const lastAmt=+(amount-instAmt*(n-1)).toFixed(2);
+    const grpId=uid();
+    for(let i=0;i<n;i++){state.payables.push({id:uid(),desc,category:cat,amount:i===n-1?lastAmt:instAmt,dueDate:addMonths(firstDue,i),supplierId:supId,supplierName:supName,paid:false,paidDate:null,notes,card:payCardSel,account,reconciled:false,installmentGroup:grpId,installmentNumber:i+1,totalInstallments:n});}
+    saveState();closeSheet();showToast(`${n} parcelas lançadas ✓`);renderApp();
+  }else{
+    const due=document.getElementById('pay-due').value;
+    const supId=document.getElementById('pay-sup').value;
+    const supName=supId?(state.suppliers.find(s=>s.id===supId)?.name||''):'';
+    if(!due){showToast('Informe o vencimento');return;}
+    const avNeedCard=payAVistaFormaSel==='credito'||payAVistaFormaSel==='debito';
+    if(avNeedCard&&!payAVistaCardSel){showToast('Selecione o cartão');return;}
+    const account=document.getElementById('av-account').value;
+    const paid=payPagoSel==='sim';
+    const paidDate=paid?(document.getElementById('pay-paid-date')?.value||due):null;
+    state.payables.push({id:uid(),desc,category:cat,amount,dueDate:due,supplierId:supId,supplierName:supName,paid,paidDate,notes,card:avNeedCard?payAVistaCardSel:null,account,reconciled:false});
+    saveState();closeSheet();showToast('Despesa registrada ✓');renderApp();
+  }
+}
+
+function openEditPayable(id){
+  const p=state.payables.find(x=>x.id===id);if(!p)return;
+  const catOpts=state.payCategories.map(c=>`<option value="${c}" ${c===p.category?'selected':''}>${c}</option>`).join('');
+  const supOpts='<option value="">— Nenhum —</option>'+state.suppliers.map(s=>`<option value="${s.id}" ${s.id===p.supplierId?'selected':''}>${s.name}</option>`).join('');
+  const accOpts='<option value="">— Nenhuma —</option>'+ACCOUNTS.map(a=>`<option value="${a.id}" ${a.id===p.account?'selected':''}>${a.name}</option>`).join('');
+  const safeDesc=(p.desc||'').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const safeNotes=(p.notes||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  openSheet(`<div class="sheet-title">Editar Despesa</div><div class="sheet-body">
+    <div class="field"><label>Descrição</label><input id="ep-desc" value="${safeDesc}"></div>
+    <div class="field-row">
+      <div class="field"><label>Categoria</label><select id="ep-cat">${catOpts}</select></div>
+      <div class="field"><label>Valor (R$)</label><input type="number" id="ep-amount" value="${p.amount}" step="0.01" min="0"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Vencimento</label><input type="date" id="ep-due" value="${p.dueDate}"></div>
+      <div class="field"><label>Conta Bancária</label><select id="ep-account">${accOpts}</select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Fornecedor</label><select id="ep-sup">${supOpts}</select></div>
+      <div class="field"><label>Cartão</label><select id="ep-card">
+        <option value="">Nenhum (PIX/Boleto)</option>${CARDS.map(c=>`<option value="${c.id}" ${c.id===p.card?'selected':''}>${c.name}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Situação</label>
+      <div class="radio-group">
+        <label class="radio-opt ${p.paid?'':'selected'}" id="ep-nao" onclick="this.classList.add('selected');document.getElementById('ep-sim').classList.remove('selected');document.getElementById('ep-pago-wrap').style.display='none'">Não pago</label>
+        <label class="radio-opt ${p.paid?'selected':''}" id="ep-sim" onclick="this.classList.add('selected');document.getElementById('ep-nao').classList.remove('selected');document.getElementById('ep-pago-wrap').style.display='block'">Pago</label>
+      </div></div>
+    <div id="ep-pago-wrap" style="display:${p.paid?'block':'none'};" class="field"><label>Data de pagamento</label><input type="date" id="ep-paid-date" value="${p.paidDate||today()}"></div>
+    <div class="field"><label>Observações</label><textarea id="ep-notes">${safeNotes}</textarea></div>
+    <button class="btn-primary" onclick="saveEditPayable('${id}')">Salvar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveEditPayable(id){
+  const p=state.payables.find(x=>x.id===id);if(!p)return;
+  p.desc=document.getElementById('ep-desc').value.trim()||p.desc;
+  p.category=document.getElementById('ep-cat').value;
+  p.amount=parseFloat(document.getElementById('ep-amount').value)||p.amount;
+  p.dueDate=document.getElementById('ep-due').value||p.dueDate;
+  p.account=document.getElementById('ep-account').value||null;
+  const supId=document.getElementById('ep-sup').value;
+  p.supplierId=supId||null;
+  p.supplierName=supId?(state.suppliers.find(s=>s.id===supId)?.name||''):'';
+  p.card=document.getElementById('ep-card').value||null;
+  p.paid=document.getElementById('ep-sim').classList.contains('selected');
+  p.paidDate=p.paid?(document.getElementById('ep-paid-date')?.value||p.dueDate):null;
+  p.notes=document.getElementById('ep-notes').value;
+  saveState();closeSheet();showToast('Atualizado ✓');expandedPay=null;renderApp();
+}
+
+// ═══════════════════════════════════════════════
+// CASH FLOW
+// ═══════════════════════════════════════════════
+function renderCashFlow(){
+  const todayStr=today();const next30=addDays(todayStr,30);
+  const pendPay=state.payables.filter(p=>!p.paid&&p.dueDate>=todayStr&&p.dueDate<=next30).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const totalSaidas=pendPay.reduce((s,p)=>s+p.amount,0);
+  const saldo=state.settings.cashBalance||0;
+  const projecao=saldo-totalSaidas;
+  const porCartao={};pendPay.filter(p=>p.card).forEach(p=>{porCartao[p.card]=(porCartao[p.card]||0)+p.amount;});
+  return`
+    <div class="header"><div class="header-row"><div class="header-titles"><h1>Fluxo de Caixa</h1><span>Próximos 30 dias</span></div></div></div>
+    <div class="cf-balance">
+      <div class="cf-balance-label">Saldo Atual em Caixa</div>
+      <div class="cf-balance-value">${fmt(saldo)}</div>
+      <div class="cf-balance-sub">Atualizado manualmente</div>
+      <button class="cf-balance-edit" onclick="openEditBalance()">Atualizar saldo</button>
+    </div>
+    <div class="cf-projections">
+      <div class="cf-proj out"><div class="cfp-label">Saídas Previstas</div><div class="cfp-value">${fmt(totalSaidas)}</div><div class="cfp-count">${pendPay.length} despesas</div></div>
+      <div class="cf-proj net"><div class="cfp-label">Projeção Saldo</div><div class="cfp-value">${fmt(projecao)}</div><div class="cfp-count">Saldo − Saídas</div></div>
+    </div>
+    <div style="padding:10px 20px 0;">
+      <div style="background:var(--surface);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);">
+        <div style="font-size:11px;color:var(--text-mid);">Projeção de Saldo (30 dias)</div>
+        <div style="font-size:26px;font-weight:700;color:${projecao>=0?'var(--green)':'var(--danger)'};">${fmt(projecao)}</div>
+        <div style="font-size:11px;color:var(--text-light);">Saldo atual − Despesas previstas</div>
+      </div>
+    </div>
+    ${Object.keys(porCartao).length>0?`<div class="section" style="margin-top:14px;"><div class="section-title">Pendente por cartão</div>
+      ${Object.entries(porCartao).map(([cardId,val])=>`<div class="cf-item"><div>${cardTagHTML(cardId)}</div><div class="cf-item-amt out">${fmt(val)}</div></div>`).join('')}
+    </div>`:''}
+    <div class="cf-upcoming section"><div class="section-title">Próximos vencimentos</div>
+      ${pendPay.slice(0,10).map(p=>`<div class="cf-item">
+        <div class="cf-item-left">
+          <div class="cf-item-name">${p.desc}${p.installmentGroup?` (${p.installmentNumber}/${p.totalInstallments})`:''}</div>
+          <div class="cf-item-date">${fmtDateFull(p.dueDate)} · ${p.card?cardTagHTML(p.card):p.category}</div>
+        </div>
+        <div class="cf-item-amt out">- ${fmt(p.amount)}</div>
+      </div>`).join('')}
+    </div>`;
+}
+function openEditBalance(){
+  openSheet(`<div class="sheet-title">Atualizar Saldo em Caixa</div><div class="sheet-body">
+    <div class="field"><label>Saldo atual (R$)</label>
+      <input type="number" id="cash-bal" value="${state.settings.cashBalance||0}" step="0.01">
+      <div style="font-size:11px;color:var(--text-mid);margin-top:4px;">Informe o saldo real atual em caixa/conta</div></div>
+    <button class="btn-primary" onclick="saveCashBalance()">Atualizar</button>
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+function saveCashBalance(){state.settings.cashBalance=parseFloat(document.getElementById('cash-bal').value)||0;saveState();closeSheet();showToast('Saldo atualizado ✓');renderApp();}
+
+// ═══════════════════════════════════════════════
+// DRE
+// ═══════════════════════════════════════════════
+function renderDRE(){
+  const pays=state.payables;
+  const receitaBruta=(state.entries||[]).filter(e=>monthKey(e.date)===viewMonth).reduce((s,e)=>s+e.amount,0);
+  const paidPays=pays.filter(p=>p.paid&&p.paidDate&&monthKey(p.paidDate)===viewMonth);
+  const totalDespesas=paidPays.reduce((s,p)=>s+p.amount,0);
+  const byCat={};paidPays.forEach(p=>{byCat[p.category]=(byCat[p.category]||0)+p.amount;});
+  const byCard={};paidPays.filter(p=>p.card).forEach(p=>{byCard[p.card]=(byCard[p.card]||0)+p.amount;});
+  const resultado=receitaBruta-totalDespesas;
+  const margem=receitaBruta>0?(resultado/receitaBruta*100).toFixed(1):0;
+  const months6=[];
+  for(let i=5;i>=0;i--){
+    const[y,m]=viewMonth.split('-').map(Number);const dt=new Date(y,m-1-i,1);const mk=dt.toISOString().slice(0,7);
+    const rec6=(state.entries||[]).filter(e=>monthKey(e.date)===mk).reduce((s,e)=>s+e.amount,0);
+    const pay6=pays.filter(p=>p.paid&&p.paidDate&&monthKey(p.paidDate)===mk).reduce((s,p)=>s+p.amount,0);
+    months6.push({mk,label:dt.toLocaleDateString('pt-BR',{month:'short'}),rec:rec6,pay:pay6,res:rec6-pay6});
+  }
+  window.__dreMonths=months6;
+
+  return`
+    <div class="header">
+      <div class="header-row">
+        <div class="header-titles"><h1>DRE</h1><span>Demonstrativo de Resultado</span></div>
+        <div class="month-nav"><button onclick="prevMonth()">‹</button><span class="month-name">${monthName(viewMonth)}</span><button onclick="nextMonth()">›</button></div>
+      </div>
+    </div>
+    <div class="dre-table">
+      <div class="dre-section-header">Receitas
+        <button onclick="navigate('entries')" style="margin-left:8px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-brd);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">+ Lançar</button>
+      </div>
+      <div class="dre-row"><span class="dre-label">(+) Receita Bruta</span><span class="dre-value pos">${fmt(receitaBruta)}</span></div>
+      <div class="dre-section-header" style="margin-top:12px;">Despesas Operacionais</div>
+      ${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`<div class="dre-row sub-item"><span class="dre-label">(−) ${cat}</span><span class="dre-value neg">${fmt(val)}</span></div>`).join('')}
+      <div class="dre-row"><span class="dre-label">Total Despesas</span><span class="dre-value neg">${fmt(totalDespesas)}</span></div>
+      <div class="dre-row total"><span class="dre-label" style="font-weight:700;">(=) Resultado Operacional</span><span class="dre-value ${resultado>=0?'pos':'neg'}" style="font-size:16px;">${fmt(resultado)}</span></div>
+    </div>
+    <div class="dre-margin-card">
+      <div><div class="dre-margin-label">Margem Operacional</div><div style="font-size:11px;color:var(--text-light);">Resultado / Receita Bruta</div></div>
+      <div class="dre-margin-value" style="color:${resultado>=0?'var(--green)':'var(--danger)'};">${margem}%</div>
+    </div>
+    ${Object.keys(byCard).length>0?`<div class="section" style="margin-bottom:14px;"><div class="section-title">Gasto por cartão no mês</div>
+      ${Object.entries(byCard).map(([cardId,val])=>`<div class="cf-item"><div>${cardTagHTML(cardId)}</div><div class="cf-item-amt out">${fmt(val)}</div></div>`).join('')}
+    </div>`:''}
+    <div class="dre-chart-wrap">
+      <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Últimos 6 meses</div>
+      <canvas id="dreChart"></canvas>
+    </div>`;
+}
+function buildDreChart(){
+  const months=window.__dreMonths;if(!months)return;
+  const ctx=document.getElementById('dreChart');if(!ctx)return;
+  if(dreChart){dreChart.destroy();dreChart=null;}
+  dreChart=new Chart(ctx,{type:'bar',data:{labels:months.map(m=>m.label),datasets:[
+    {label:'Receita',data:months.map(m=>m.rec),backgroundColor:'rgba(90,158,138,.7)',borderRadius:4},
+    {label:'Despesa',data:months.map(m=>m.pay),backgroundColor:'rgba(192,84,74,.7)',borderRadius:4},
+    {label:'Resultado',data:months.map(m=>m.res),backgroundColor:'rgba(201,169,110,.9)',borderRadius:4,type:'line',fill:false,borderColor:'rgba(201,169,110,1)',tension:.3,pointRadius:3},
+  ]},options:{responsive:true,plugins:{legend:{labels:{font:{family:'Poppins',size:11},boxWidth:10}}},scales:{x:{grid:{display:false},ticks:{font:{family:'Poppins',size:10}}},y:{grid:{color:'rgba(0,0,0,.05)'},ticks:{font:{family:'Poppins',size:10},callback:v=>'R$'+v.toLocaleString('pt-BR')}}}}});
+}
+
+// ═══════════════════════════════════════════════
+// CONCILIAÇÃO BANCÁRIA COM EXTRATO
+// ═══════════════════════════════════════════════
+// Estado: state.bankStatements = [{ id, accountId, importedAt, transactions:[...] }]
+// Transação: { id, fitid, date, amount, memo, type, matchedId, matchedType, ignored }
+
+function ensureBankStatements(){if(!state.bankStatements)state.bankStatements=[];}
+
+// ── PARSERS ──────────────────────────────────────
+function parseOFX(text){
+  const txns=[];
+  // Suporte OFX antigo (SGML) e novo (XML-like)
+  const blocks=text.match(/<STMTTRN>([\s\S]*?)<\/STMTTRN>/gi)||[];
+  blocks.forEach(block=>{
+    const get=(tag)=>{const m=block.match(new RegExp('<'+tag+'>([^<\\n\\r]+)','i'));return m?m[1].trim():''};
+    const amtRaw=get('TRNAMT').replace(',','.');
+    const amt=parseFloat(amtRaw);
+    if(isNaN(amt))return;
+    const dtRaw=get('DTPOSTED')||get('DTAVAIL');
+    const date=ofxDateToISO(dtRaw);
+    txns.push({id:uid(),fitid:get('FITID')||uid(),date,amount:amt,
+      memo:(get('MEMO')||get('NAME')||'').replace(/&amp;/g,'&'),
+      type:amt<0?'debit':'credit',matchedId:null,matchedType:null,ignored:false});
+  });
+  // Fallback SGML sem tags de fechamento
+  if(!txns.length){
+    const rawBlocks=text.split('<STMTTRN>').slice(1);
+    rawBlocks.forEach(block=>{
+        const get2=(tag)=>{const m=block.match(new RegExp('<'+tag+'>([^\\n\\r<]+)','i'));return m?m[1].trim():''};
+      const amtRaw=get2('TRNAMT').replace(',','.');
+      const amt=parseFloat(amtRaw);if(isNaN(amt))return;
+      const dtRaw=get2('DTPOSTED')||get2('DTAVAIL');
+      const date=ofxDateToISO(dtRaw);
+      txns.push({id:uid(),fitid:get2('FITID')||uid(),date,amount:amt,
+        memo:(get2('MEMO')||get2('NAME')||'').replace(/&amp;/g,'&'),
+        type:amt<0?'debit':'credit',matchedId:null,matchedType:null,ignored:false});
+    });
+  }
+  return txns;
+}
+
+function ofxDateToISO(raw){
+  if(!raw)return today();
+  // Formatos: 20260501, 20260501120000, 20260501120000[-3:BRT]
+  const digits=raw.replace(/[^0-9]/g,'').slice(0,8);
+  if(digits.length<8)return today();
+  return`${digits.slice(0,4)}-${digits.slice(4,6)}-${digits.slice(6,8)}`;
+}
+
+// CSV genérico: detecta colunas por banco
+function parseCSVStatement(text, accountId){
+  const lines=text.trim().split(/\r?\n/);
+  if(lines.length<2)return[];
+  const txns=[];
+
+  // Bradesco: Data;Histórico;Docto.;Crédito (R$);Débito (R$);Saldo (R$)
+  // Itaú:     Data,Histórico,Valor
+  // Nubank:   Date,description,amount  (inglês)
+  const header=lines[0].toLowerCase();
+  const sep=header.includes(';')?';':',';
+  const cols=header.split(sep).map(c=>c.trim().replace(/"/g,''));
+
+  const idxDate=cols.findIndex(c=>/^data|^date/.test(c));
+  const idxDesc=cols.findIndex(c=>/hist|desc|memo|name/.test(c));
+  const idxAmt=cols.findIndex(c=>/^valor$|^amount$/.test(c));
+  const idxCred=cols.findIndex(c=>/crédit|credit/.test(c));
+  const idxDeb=cols.findIndex(c=>/débit|debit/.test(c));
+
+  for(let i=1;i<lines.length;i++){
+    const row=lines[i].split(sep).map(c=>c.trim().replace(/^"|"$/g,''));
+    if(row.length<2)continue;
+
+    // Parse date
+    let dateRaw=idxDate>=0?row[idxDate]:'';
+    let date=csvDateToISO(dateRaw,accountId);
+
+    // Parse amount
+    let amt=0;
+    if(idxAmt>=0){
+      amt=parseFloat((row[idxAmt]||'').replace(/\./g,'').replace(',','.'))||0;
+    }else if(idxCred>=0||idxDeb>=0){
+      const cred=parseFloat((row[idxCred]||'').replace(/\./g,'').replace(',','.'))||0;
+      const deb =parseFloat((row[idxDeb] ||'').replace(/\./g,'').replace(',','.'))||0;
+      amt=cred>0?cred:-deb;
+    }
+    if(amt===0)continue;
+    const memo=idxDesc>=0?row[idxDesc]:'';
+    txns.push({id:uid(),fitid:uid(),date,amount:amt,memo,
+      type:amt<0?'debit':'credit',matchedId:null,matchedType:null,ignored:false});
+  }
+  return txns;
+}
+
+function csvDateToISO(raw, accountId){
+  if(!raw)return today();
+  // DD/MM/YYYY ou MM/DD/YYYY ou YYYY-MM-DD
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(raw)){
+    // Nubank usa MM/DD, demais usam DD/MM
+    if(accountId==='nubank-pf'){const[m,d,y]=raw.split('/');return`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;}
+    const[d,m,y]=raw.split('/');return`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+  return today();
+}
+
+// ── AUTO-MATCH ────────────────────────────────────
+function autoMatch(txns, accountId){
+  const tolerance=0.01; // R$ 0,01 diferença aceita
+  const candidates=[
+    ...state.payables.filter(p=>p.account===accountId||(!p.account&&accountId==='bradesco-pj')),
+    ...state.entries.filter(()=>true)
+  ];
+
+  txns.forEach(txn=>{
+    if(txn.matchedId||txn.ignored)return;
+    const absAmt=Math.abs(txn.amount);
+
+    // Match em payables: débitos no extrato com despesas pagas
+    if(txn.type==='debit'){
+      const match=state.payables.find(p=>
+        !p._statementMatched &&
+        (p.account===accountId||!p.account) &&
+        Math.abs(p.amount-absAmt)<=tolerance &&
+        (!p.paidDate||Math.abs(new Date(p.paidDate)-new Date(txn.date))<=3*86400000)
+      );
+      if(match){txn.matchedId=match.id;txn.matchedType='payable';match._statementMatched=true;}
+    }
+    // Match em entries: créditos no extrato com entradas
+    if(txn.type==='credit'){
+      const match=(state.entries||[]).find(e=>
+        !e._statementMatched &&
+        Math.abs(e.amount-absAmt)<=tolerance &&
+        Math.abs(new Date(e.date)-new Date(txn.date))<=3*86400000
+      );
+      if(match){txn.matchedId=match.id;txn.matchedType='entry';match._statementMatched=true;}
+    }
+  });
+
+  // Limpar flags temporárias
+  state.payables.forEach(p=>delete p._statementMatched);
+  (state.entries||[]).forEach(e=>delete e._statementMatched);
+  return txns;
+}
+
+// ── VIEW ──────────────────────────────────────────
+let concilAccountSel='bradesco-pj';
+let concilStatementIdx=null; // índice do extrato selecionado
+
+function renderReconciliation(){
+  ensureBankStatements();
+  const stmt=concilStatementIdx!==null?state.bankStatements[concilStatementIdx]:null;
+  const txns=stmt?stmt.transactions:[];
+  const matched=txns.filter(t=>t.matchedId&&!t.ignored);
+  const unmatched=txns.filter(t=>!t.matchedId&&!t.ignored);
+  const ignored=txns.filter(t=>t.ignored);
+  const totalDebits=txns.filter(t=>t.type==='debit'&&!t.ignored).reduce((s,t)=>s+Math.abs(t.amount),0);
+  const totalCredits=txns.filter(t=>t.type==='credit'&&!t.ignored).reduce((s,t)=>s+t.amount,0);
+
+  return`
+    <div class="header">
+      <div class="header-row"><div class="header-titles"><h1>Conciliação Bancária</h1><span>Extrato vs. Lançamentos</span></div></div>
+    </div>
+
+    <!-- SELECIONAR CONTA -->
+    <div style="padding:14px 20px 0;">
+      <div class="section-title">Conta bancária</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${ACCOUNTS.map(a=>`<button onclick="concilAccountSel='${a.id}';concilStatementIdx=null;renderApp()"
+          style="padding:8px 14px;border-radius:20px;border:1.5px solid ${concilAccountSel===a.id?'var(--gold)':'var(--nude)'};
+          background:${concilAccountSel===a.id?'var(--gold-bg)':'var(--surface)'};
+          color:${concilAccountSel===a.id?'var(--gold)':'var(--text-mid)'};
+          font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">
+          🏦 ${a.name}
+        </button>`).join('')}
+      </div>
+    </div>
+
+    <!-- IMPORTAR EXTRATO -->
+    <div style="padding:14px 20px 0;">
+      <div class="section-title">Importar extrato</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <label style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--gold-bg);background:var(--gold-bg);color:var(--gold);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <span style="font-size:20px;">📄</span>OFX / QFX
+          <input type="file" accept=".ofx,.qfx,.OFX" style="display:none" onchange="handleStatementFile(event,'ofx','${concilAccountSel}')">
+          <span style="font-size:10px;font-weight:400;color:var(--text-mid);">Bradesco, Itaú, Nubank</span>
+        </label>
+        <label style="padding:14px;border-radius:var(--r);border:1.5px dashed var(--nude);background:var(--surface2);color:var(--text-mid);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <span style="font-size:20px;">📊</span>CSV
+          <input type="file" accept=".csv,.CSV,.txt" style="display:none" onchange="handleStatementFile(event,'csv','${concilAccountSel}')">
+          <span style="font-size:10px;font-weight:400;">Planilha exportada do banco</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- EXTRATOS IMPORTADOS -->
+    ${state.bankStatements.filter(s=>s.accountId===concilAccountSel).length>0?`
+    <div style="padding:12px 20px 0;">
+      <div class="section-title">Extratos importados</div>
+      <div style="display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;">
+        ${state.bankStatements.map((s,i)=>s.accountId!==concilAccountSel?'':
+          `<button onclick="concilStatementIdx=${i};renderApp()"
+            style="flex-shrink:0;padding:8px 12px;border-radius:var(--r-sm);border:1.5px solid ${concilStatementIdx===i?'var(--mauve)':'var(--nude)'};
+            background:${concilStatementIdx===i?'var(--mauve-bg)':'var(--surface)'};
+            color:${concilStatementIdx===i?'var(--mauve)':'var(--text-mid)'};
+            font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">
+            ${s.importedAt} · ${s.transactions.length} transações
+            <button onclick="event.stopPropagation();deleteStatement(${i})" style="margin-left:6px;background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">✕</button>
+          </button>`).join('')}
+      </div>
+    </div>`:''}
+
+    ${stmt?`
+    <!-- RESUMO DO EXTRATO -->
+    <div class="summary-grid">
+      <div class="sum-card green"><div class="sc-label">Créditos (extrato)</div><div class="sc-value">${fmt(totalCredits)}</div><div class="sc-sub">${txns.filter(t=>t.type==='credit'&&!t.ignored).length} transações</div></div>
+      <div class="sum-card red"><div class="sc-label">Débitos (extrato)</div><div class="sc-value">${fmt(totalDebits)}</div><div class="sc-sub">${txns.filter(t=>t.type==='debit'&&!t.ignored).length} transações</div></div>
+      <div class="sum-card mauve"><div class="sc-label">Conciliados</div><div class="sc-value">${matched.length}</div><div class="sc-sub">de ${txns.length-ignored.length} transações</div></div>
+      <div class="sum-card ${unmatched.length>0?'warn':'green'}"><div class="sc-label">Sem match</div><div class="sc-value">${unmatched.length}</div><div class="sc-sub">${unmatched.length>0?'requerem atenção':'tudo ok!'}</div></div>
+    </div>
+
+    <!-- BOTÃO RE-MATCH -->
+    <div style="padding:12px 20px 0;">
+      <button onclick="reRunAutoMatch()" style="width:100%;padding:11px;border-radius:var(--r);border:1.5px solid var(--mauve-brd);background:var(--mauve-bg);color:var(--mauve);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">⚡ Rodar conciliação automática</button>
+    </div>
+
+    <!-- TRANSAÇÕES SEM MATCH -->
+    ${unmatched.length>0?`
+    <div style="padding:14px 20px 0;">
+      <div class="section-title" style="color:var(--warn);">⚠ Sem correspondência (${unmatched.length})</div>
+      ${unmatched.map(t=>`
+        <div style="background:var(--surface);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--sh);border-left:3px solid ${t.type==='debit'?'var(--danger)':'var(--green)'};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.memo||'Sem descrição'}</div>
+              <div style="font-size:11px;color:var(--text-mid);margin-top:2px;">${fmtDateFull(t.date)} · ${t.type==='debit'?'Débito':'Crédito'}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-size:15px;font-weight:700;color:${t.type==='debit'?'var(--danger)':'var(--green)'};">${t.type==='debit'?'-':'+'} ${fmt(Math.abs(t.amount))}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <button onclick="openManualMatch('${t.id}')" style="flex:1;padding:7px;border-radius:var(--r-sm);border:1.5px solid var(--mauve-brd);background:var(--mauve-bg);color:var(--mauve);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">Vincular manualmente</button>
+            ${t.type==='debit'?`<button onclick="createPayableFromTxn('${t.id}')" style="flex:1;padding:7px;border-radius:var(--r-sm);border:1.5px solid var(--danger-brd);background:var(--danger-bg);color:var(--danger);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">+ Criar Despesa</button>`
+            :`<button onclick="createEntryFromTxn('${t.id}')" style="flex:1;padding:7px;border-radius:var(--r-sm);border:1.5px solid var(--green-brd);background:var(--green-bg);color:var(--green);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">+ Criar Entrada</button>`}
+            <button onclick="ignoreTxn('${t.id}')" style="padding:7px 12px;border-radius:var(--r-sm);border:1.5px solid var(--nude);background:var(--surface2);color:var(--text-mid);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;">Ignorar</button>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+
+    <!-- TRANSAÇÕES CONCILIADAS -->
+    ${matched.length>0?`
+    <div style="padding:14px 20px 0;">
+      <div class="section-title" style="color:var(--green);">✓ Conciliados (${matched.length})</div>
+      ${matched.map(t=>{
+        const lnk=t.matchedType==='payable'?state.payables.find(p=>p.id===t.matchedId):(state.entries||[]).find(e=>e.id===t.matchedId);
+        return`<div style="background:var(--green-bg);border:1px solid var(--green-brd);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;">
+          <span style="font-size:18px;margin-top:1px;">✓</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:var(--green);font-weight:600;">EXTRATO: ${t.memo||'Sem descrição'} · ${fmtDateFull(t.date)}</div>
+            <div style="font-size:12px;color:var(--text-mid);margin-top:2px;">SISTEMA: ${lnk?(lnk.desc||lnk.desc||'—'):'Lançamento removido'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;color:${t.type==='debit'?'var(--danger)':'var(--green)'};">${t.type==='debit'?'-':'+'} ${fmt(Math.abs(t.amount))}</div>
+            <button onclick="unmatchTxn('${t.id}')" style="font-size:10px;color:var(--text-mid);background:none;border:none;cursor:pointer;font-family:'Poppins',sans-serif;">desvincular</button>
+          </div>
+        </div>`;}).join('')}
+    </div>`:''}
+
+    <!-- IGNORADOS -->
+    ${ignored.length>0?`
+    <div style="padding:14px 20px 0;">
+      <div class="section-title" style="color:var(--text-light);">Ignorados (${ignored.length})</div>
+      ${ignored.map(t=>`
+        <div style="background:var(--surface2);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;opacity:.7;">
+          <div style="font-size:12px;color:var(--text-mid);">${t.memo||'Sem descrição'} · ${fmtDate(t.date)}</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text-mid);">${fmt(Math.abs(t.amount))}</span>
+            <button onclick="unignoreTxn('${t.id}')" style="font-size:10px;color:var(--mauve);background:none;border:none;cursor:pointer;font-family:'Poppins',sans-serif;">restaurar</button>
+          </div>
+        </div>`).join('')}
+    </div>`:''}
+    `:`
+    <div class="empty-state" style="padding:60px 20px;">
+      <div class="es-icon">🏦</div>
+      <div class="es-title">Nenhum extrato importado</div>
+      <div class="es-sub">Exporte o extrato do seu banco (OFX ou CSV) e importe acima para ${ACCOUNTS.find(a=>a.id===concilAccountSel)?.name||concilAccountSel}</div>
+    </div>`}`;
+}
+
+// ── HANDLERS ─────────────────────────────────────
+function handleStatementFile(event, format, accountId){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    ensureBankStatements();
+    let txns=[];
+    try{
+      if(format==='ofx')txns=parseOFX(e.target.result);
+      else txns=parseCSVStatement(e.target.result,accountId);
+    }catch(err){showToast('Erro ao ler arquivo');return;}
+    if(!txns.length){showToast('Nenhuma transação encontrada');return;}
+    txns=autoMatch(txns,accountId);
+    const stmt={id:uid(),accountId,importedAt:today(),filename:file.name,transactions:txns};
+    state.bankStatements.push(stmt);
+    concilStatementIdx=state.bankStatements.length-1;
+    saveState();
+    const mCount=txns.filter(t=>t.matchedId).length;
+    showToast(`${txns.length} transações · ${mCount} conciliadas automaticamente`);
+    renderApp();
+  };
+  reader.readAsText(file,'latin1');
+  event.target.value='';
+}
+
+function reRunAutoMatch(){
+  if(concilStatementIdx===null)return;
+  const stmt=state.bankStatements[concilStatementIdx];
+  // Reset matches não manuais (mantém ignored)
+  stmt.transactions.forEach(t=>{if(!t.ignored){t.matchedId=null;t.matchedType=null;}});
+  stmt.transactions=autoMatch(stmt.transactions,stmt.accountId);
+  saveState();
+  const mCount=stmt.transactions.filter(t=>t.matchedId).length;
+  showToast(`${mCount} conciliadas automaticamente`);
+  renderApp();
+}
+
+function deleteStatement(idx){
+  if(!confirm('Remover este extrato importado?'))return;
+  state.bankStatements.splice(idx,1);
+  concilStatementIdx=null;saveState();renderApp();showToast('Extrato removido');
+}
+
+function ignoreTxn(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(t){t.ignored=true;t.matchedId=null;t.matchedType=null;}
+  saveState();renderApp();
+}
+function unignoreTxn(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(t)t.ignored=false;saveState();renderApp();
+}
+function unmatchTxn(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(t){t.matchedId=null;t.matchedType=null;}saveState();renderApp();
+}
+
+function openManualMatch(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(!t)return;
+  const absAmt=Math.abs(t.amount);
+  const accountId=state.bankStatements[concilStatementIdx].accountId;
+
+  // Candidatos: payables próximos ± 30 dias com valor similar (±20%)
+  const payables=state.payables.filter(p=>
+    (p.account===accountId||!p.account)&&
+    Math.abs(p.amount-absAmt)/Math.max(absAmt,1)<=0.5
+  ).sort((a,b)=>Math.abs(a.amount-absAmt)-Math.abs(b.amount-absAmt)).slice(0,10);
+
+  const entries=(state.entries||[]).filter(e=>
+    Math.abs(e.amount-absAmt)/Math.max(absAmt,1)<=0.5
+  ).sort((a,b)=>Math.abs(a.amount-absAmt)-Math.abs(b.amount-absAmt)).slice(0,10);
+
+  openSheet(`<div class="sheet-title">Vincular manualmente</div><div class="sheet-body">
+    <div style="background:var(--surface2);border-radius:var(--r-sm);padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;">${t.memo||'Sem descrição'}</div>
+      <div style="font-size:12px;color:var(--text-mid);margin-top:2px;">${fmtDateFull(t.date)} · ${t.type==='debit'?'Débito':'Crédito'} · <strong style="color:${t.type==='debit'?'var(--danger)':'var(--green)'};">${fmt(absAmt)}</strong></div>
+    </div>
+    ${t.type==='debit'&&payables.length>0?`
+      <div class="section-title">Despesas com valor próximo</div>
+      ${payables.map(p=>`<div onclick="confirmManualMatch('${txnId}','${p.id}','payable')"
+        style="background:var(--surface);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${p.desc}</div>
+          <div style="font-size:11px;color:var(--text-mid);">${fmtDate(p.dueDate)} · ${p.category}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--danger);">${fmt(p.amount)}</div>
+      </div>`).join('')}`:''}
+    ${t.type==='credit'&&entries.length>0?`
+      <div class="section-title">Entradas com valor próximo</div>
+      ${entries.map(e=>`<div onclick="confirmManualMatch('${txnId}','${e.id}','entry')"
+        style="background:var(--surface);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:13px;font-weight:600;">${e.desc}</div>
+          <div style="font-size:11px;color:var(--text-mid);">${fmtDate(e.date)} · ${e.category||''}</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--green);">${fmt(e.amount)}</div>
+      </div>`).join('')}`:''}
+    ${(t.type==='debit'&&payables.length===0)||(t.type==='credit'&&entries.length===0)?`<div style="text-align:center;padding:20px;color:var(--text-mid);font-size:13px;">Nenhum candidato encontrado. Use os botões "Criar Despesa" ou "Criar Entrada" na tela anterior.</div>`:''}
+    <button class="btn-secondary" onclick="closeSheet()">Cancelar</button>
+  </div>`);
+}
+
+function confirmManualMatch(txnId, linkedId, linkedType){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(t){t.matchedId=linkedId;t.matchedType=linkedType;}
+  saveState();closeSheet();showToast('Vinculado ✓');renderApp();
+}
+
+function createPayableFromTxn(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(!t)return;
+  const accountId=state.bankStatements[concilStatementIdx].accountId;
+  const newId=uid();
+  state.payables.push({id:newId,desc:t.memo||'Transação do extrato',category:'Outros',amount:Math.abs(t.amount),
+    dueDate:t.date,supplierId:'',supplierName:'',paid:true,paidDate:t.date,notes:'Criado via conciliação bancária',
+    card:null,account:accountId,reconciled:true});
+  t.matchedId=newId;t.matchedType='payable';
+  saveState();showToast('Despesa criada e vinculada ✓');renderApp();
+}
+
+function createEntryFromTxn(txnId){
+  if(concilStatementIdx===null)return;
+  const t=state.bankStatements[concilStatementIdx].transactions.find(x=>x.id===txnId);
+  if(!t)return;
+  const newId=uid();
+  state.entries.push({id:newId,date:t.date,desc:t.memo||'Transação do extrato',amount:Math.abs(t.amount),
+    paymentMethod:'transferencia',paymentCard:'',category:'Outros',professionalId:'',patientId:'',
+    notes:'Criado via conciliação bancária'});
+  t.matchedId=newId;t.matchedType='entry';
+  saveState();showToast('Entrada criada e vinculada ✓');renderApp();
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+loadState();
+renderApp();
+</script>
+</body>
+</html>
