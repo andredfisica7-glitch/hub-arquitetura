@@ -87,9 +87,10 @@
     .nav-item.pj-nav.active{color:var(--pj);}
     .nav-item.reports-nav.active{color:var(--rose);}
     .nav-item.incomes-nav.active{color:var(--income);}
-    /* 6 items: compact */
-    .bottom-nav .nav-item{font-size:9px;padding:9px 2px 7px;}
-    .bottom-nav .nav-item svg{width:20px;height:20px;}
+    .nav-item.recon-nav.active{color:#5A9E8A;}
+    /* 7 items: compact */
+    .bottom-nav .nav-item{font-size:8.5px;padding:8px 1px 6px;}
+    .bottom-nav .nav-item svg{width:19px;height:19px;}
 
     /* ── SECTION ── */
     .section{padding:16px 20px 0;}
@@ -103,6 +104,7 @@
     }
     .summary-card .sc-label{font-size:11px;color:var(--text-mid);margin-bottom:4px;}
     .summary-card .sc-value{font-size:18px;font-weight:600;color:var(--text);}
+    .summary-card .sc-sub{font-size:10px;color:var(--text-light);margin-top:2px;}
     .summary-card.pj-card{background:var(--pj-bg);border:1.5px solid var(--pj-border);}
     .summary-card.pj-card .sc-label{color:var(--pj);}
     .summary-card.pj-card .sc-value{color:var(--pj);}
@@ -628,6 +630,15 @@ const DEFAULT_INCOME_CATEGORIES = [
   { id:'inc_outros',    name:'Outros',           color:'#A8A8A8', icon:'📦' },
 ];
 
+const DEFAULT_ACCOUNTS = [
+  { id:'acc_nubank',    name:'Nubank',           color:'#7B2FBE' },
+  { id:'acc_itau',      name:'Itaú',             color:'#EC7000' },
+  { id:'acc_bradesco',  name:'Bradesco',         color:'#CC0000' },
+  { id:'acc_inter',     name:'Inter',            color:'#FF6B00' },
+  { id:'acc_caixa',     name:'Caixa Econômica',  color:'#005CA9' },
+  { id:'acc_bb',        name:'Banco do Brasil',  color:'#2E7D32' },
+];
+
 const INVESTMENT_TYPES = [
   { id:'renda_fixa', label:'Renda Fixa', icon:'🏦', color:'#8BA89E' },
   { id:'acoes',      label:'Ações',      icon:'📈', color:'#9B8EC4' },
@@ -637,11 +648,49 @@ const INVESTMENT_TYPES = [
   { id:'outro',      label:'Outro',      icon:'📦', color:'#A8A8A8' },
 ];
 
-function pmBadge(method, pixAccount){
+function getAccount(id){ return state.accounts.find(a=>a.id===id); }
+
+function accountSelectOpts(selectedId=''){
+  return '<option value="">— Nenhuma —</option>'
+    +state.accounts.map(a=>`<option value="${a.id}"${a.id===selectedId?' selected':''}>${a.name}</option>`).join('')
+    +'<option value="__new__">＋ Nova conta...</option>';
+}
+
+function addInlineAccount(selectId){
+  const sel=document.getElementById(selectId);if(!sel)return;
+  const prev=sel.dataset.prev||'';
+  const name=prompt('Nome da conta (ex: Nubank, Itaú PF, C6):');
+  if(!name||!name.trim()){sel.value=prev;return;}
+  const acc={id:uid(),name:name.trim(),color:CARD_COLORS[state.accounts.length%CARD_COLORS.length]};
+  state.accounts.push(acc);saveState();
+  sel.innerHTML=accountSelectOpts(acc.id);sel.value=acc.id;
+}
+
+function catSelectOpts(selectedId=''){
+  return state.categories.map(c=>`<option value="${c.id}"${c.id===selectedId?' selected':''}>${c.icon} ${c.name}</option>`).join('')
+    +'<option value="__new__">＋ Nova categoria...</option>';
+}
+
+function addInlineCategory(selectId){
+  const sel=document.getElementById(selectId);if(!sel)return;
+  const prev=sel.dataset.prev||state.categories[0]?.id||'';
+  const name=prompt('Nome da nova categoria:');
+  if(!name||!name.trim()){sel.value=prev;return;}
+  const icons=['🏷️','💡','🎯','🛍️','🔧','📱','🏋️','🎨','🎁','🍀'];
+  const colors=['#E8A598','#B8857A','#C9A96E','#8BA89E','#9B8EC4','#A8B89E','#8EA8B8','#6E8EC9','#C4A87A','#D4A0A0'];
+  const cat={id:uid(),name:name.trim(),color:colors[state.categories.length%colors.length],icon:icons[state.categories.length%icons.length]};
+  state.categories.push(cat);saveState();
+  sel.innerHTML=catSelectOpts(cat.id);sel.value=cat.id;
+}
+
+function pmBadge(method, account, pixAccount){
   if(!method||method==='credito') return '';
   const p=PAYMENT_METHODS.find(m=>m.id===method);
   if(!p) return '';
-  const extra=(method==='pix'&&pixAccount)?` · ${pixAccount}`:'';
+  let accName='';
+  if(account){ const a=getAccount(account); accName=a?a.name:account; }
+  else if(pixAccount&&method==='pix'){ accName=pixAccount; }
+  const extra=accName?` · ${accName}`:'';
   return `<span class="pm-badge">${p.icon} ${p.label}${extra}</span>`;
 }
 
@@ -662,7 +711,7 @@ function monthRange(startDate, n){
 // ═══════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════
-let state = { expenses:[], cards:[], categories:[...DEFAULT_CATEGORIES], investments:[], incomes:[], incomeCategories:[...DEFAULT_INCOME_CATEGORIES], fixedExpenses:[], fixedPayments:{} };
+let state = { expenses:[], cards:[], categories:[...DEFAULT_CATEGORIES], investments:[], incomes:[], incomeCategories:[...DEFAULT_INCOME_CATEGORIES], fixedExpenses:[], fixedPayments:{}, accounts:[...DEFAULT_ACCOUNTS], bankTransactions:[] };
 let fabOpen = false;
 let currentView = 'dashboard';
 let filterCard = null;
@@ -687,6 +736,8 @@ function loadState(){
       if(!state.fixedExpenses) state.fixedExpenses=[];
       if(!state.fixedPayments) state.fixedPayments={};
       if(!state.incomeCategories) state.incomeCategories=[...DEFAULT_INCOME_CATEGORIES];
+      if(!state.accounts) state.accounts=[...DEFAULT_ACCOUNTS];
+      if(!state.bankTransactions) state.bankTransactions=[];
       DEFAULT_CATEGORIES.forEach(dc=>{
         if(!state.categories.find(c=>c.id===dc.id)) state.categories.push(dc);
       });
@@ -752,7 +803,7 @@ function closeModal(){
 // ═══════════════════════════════════════════════════════════
 function renderApp(){
   const app=document.getElementById('app');
-  const views={ dashboard:renderDashboard, incomes:renderIncomes, expenses:renderExpenses, cards:renderCards, pj:renderPJ, reports:renderReports };
+  const views={ dashboard:renderDashboard, incomes:renderIncomes, expenses:renderExpenses, cards:renderCards, pj:renderPJ, reports:renderReports, reconciliation:renderReconciliation };
   const navHTML=`
   <nav class="bottom-nav">
     ${navItem('dashboard','dashboard',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,'Início')}
@@ -761,6 +812,7 @@ function renderApp(){
     ${navItem('cards','cards',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="5" width="20" height="14" rx="3"/><path d="M2 10h20"/></svg>`,'Cartões')}
     ${navItem('pj','pj-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>`,'Clínica')}
     ${navItem('reports','reports-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="10"/><path d="M12 12L12 6"/><path d="M12 12L17 14.5"/><path d="M12 12L7.5 16"/></svg>`,'Visão')}
+    ${navItem('reconciliation','recon-nav',`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M2 8h20M8 21l4-4 4 4"/></svg>`,'Conciliar')}
   </nav>`;
 
   app.innerHTML=(views[currentView]||renderDashboard)()+navHTML;
@@ -958,7 +1010,7 @@ function renderExpenses(){
                   <span class="expense-date">${fmtDate(e.date)}</span>
                   ${card?`<span class="card-chip" style="background:${card.color}">${card.name}</span>`:''}
                   ${e.installments>1?`<span class="inst-badge">${e.installmentNum}/${e.installments}</span>`:''}
-                  ${pmBadge(e.paymentMethod, e.pixAccount)}
+                  ${pmBadge(e.paymentMethod, e.account, e.pixAccount)}
                   ${e.isPJ?`<span class="pj-badge">🏥 Clínica PJ</span>`:''}
                 </div>
               </div>
@@ -1087,7 +1139,7 @@ function renderPJ(){
                       <span class="expense-date">${fmtDate(e.date)}</span>
                       ${card?`<span class="card-chip" style="background:${card.color}">${card.name}</span>`:''}
                       ${e.installments>1?`<span class="inst-badge">${e.installmentNum}/${e.installments}</span>`:''}
-                      ${pmBadge(e.paymentMethod, e.pixAccount)}
+                      ${pmBadge(e.paymentMethod, e.account, e.pixAccount)}
                     </div>
                   </div>
                   <div class="expense-amount pj">${fmt(e.amount)}</div>
@@ -1133,7 +1185,6 @@ function copyPJReport(){
 // ═══════════════════════════════════════════════════════════
 function openAddExpense(forcePJ=false){
   const today=new Date().toISOString().slice(0,10);
-  const catOptions=state.categories.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
   const cardOptions=state.cards.map(c=>`<option value="${c.id}">${c.name} ****${c.lastFour}</option>`).join('');
 
   const pmPills=PAYMENT_METHODS.map(p=>`
@@ -1176,10 +1227,10 @@ function openAddExpense(forcePJ=false){
       </div>
     </div>
 
-    <div id="section-pix" class="slide-section hidden-section" style="max-height:80px">
+    <div id="section-account" class="slide-section hidden-section" style="max-height:100px">
       <div class="form-group">
-        <label class="form-label">Conta de origem do PIX</label>
-        <input id="f-pix-account" class="form-input" type="text" placeholder="Ex: Nubank, Itaú, Caixa...">
+        <label class="form-label">Conta de origem</label>
+        <select id="f-account" class="form-select" onfocus="this.dataset.prev=this.value" onchange="if(this.value==='__new__')addInlineAccount('f-account')">${accountSelectOpts()}</select>
       </div>
     </div>
 
@@ -1194,7 +1245,7 @@ function openAddExpense(forcePJ=false){
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Categoria</label>
-        <select id="f-cat" class="form-select">${catOptions}</select>
+        <select id="f-cat" class="form-select" onfocus="this.dataset.prev=this.value" onchange="if(this.value==='__new__')addInlineCategory('f-cat')">${catSelectOpts(forcePJ?'cat_pj':'')}</select>
       </div>
       <div class="form-group">
         <label class="form-label">1ª cobrança</label>
@@ -1231,7 +1282,6 @@ function openAddExpense(forcePJ=false){
     <button class="btn btn-primary" onclick="submitExpense()">Salvar Lançamento</button>
   </div>`);
 
-  if(forcePJ) document.getElementById('f-cat').value='cat_pj';
   // Init: credito is default — show card + installments
   onPaymentMethodChange('credito');
 }
@@ -1249,14 +1299,13 @@ function onPaymentMethodChange(method){
   });
   const cardSection=document.getElementById('section-card');
   const instSection=document.getElementById('section-installments');
-  const pixSection=document.getElementById('section-pix');
+  const accountSection=document.getElementById('section-account');
   const showCard=method==='credito'||method==='debito';
   const showInst=method==='credito';
-  const showPix=method==='pix';
+  const showAccount=method!=='credito';
   if(cardSection) cardSection.classList.toggle('hidden-section',!showCard);
   if(instSection) instSection.classList.toggle('hidden-section',!showInst);
-  if(pixSection) pixSection.classList.toggle('hidden-section',!showPix);
-  // Reset to 1x when switching away from crédito
+  if(accountSection) accountSection.classList.toggle('hidden-section',!showAccount);
   if(!showInst) selectInstallment(1);
   updateInstallmentPreview();
 }
@@ -1296,7 +1345,7 @@ function submitExpense(){
   const isPJ=document.getElementById('pj-btn').classList.contains('on');
   const activeMethod=PAYMENT_METHODS.find(p=>document.getElementById('pm-'+p.id)?.classList.contains('active'));
   const paymentMethod=activeMethod?activeMethod.id:'credito';
-  const pixAccount=paymentMethod==='pix'?(document.getElementById('f-pix-account')?.value.trim()||''):'';
+  const account=paymentMethod!=='credito'?(document.getElementById('f-account')?.value||''):'';
   const installments=getSelectedInstallments();
 
   const isFixed=document.getElementById('fixed-btn')?.classList.contains('on')||false;
@@ -1307,7 +1356,7 @@ function submitExpense(){
 
   // Save as recurring fixed expense template
   if(isFixed){
-    state.fixedExpenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, isPJ, paymentMethod, pixAccount, dayOfMonth });
+    state.fixedExpenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, isPJ, paymentMethod, account, dayOfMonth });
     saveState(); closeModal(); renderApp();
     showToast('🔄 Gasto fixo cadastrado!');
     return;
@@ -1323,14 +1372,14 @@ function submitExpense(){
         : parcela;
       state.expenses.push({
         id:uid(), amount:parcelaAmount, desc, categoryId:catId,
-        cardId, date:addMonths(date,i), isPJ, paymentMethod, pixAccount,
+        cardId, date:addMonths(date,i), isPJ, paymentMethod, account,
         installments, installmentNum:i+1, installmentGroup:group,
       });
     }
     saveState(); closeModal(); renderApp();
     showToast(`✅ ${installments}x lançado${installments!==1?'s':''}!`);
   } else {
-    state.expenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, date, isPJ, paymentMethod, pixAccount, installments:1 });
+    state.expenses.push({ id:uid(), amount, desc, categoryId:catId, cardId, date, isPJ, paymentMethod, account, installments:1 });
     saveState(); closeModal(); renderApp();
     showToast('✅ Lançamento salvo!');
   }
@@ -1439,6 +1488,7 @@ function renderFixedSection(){
     const paid=!!state.fixedPayments[k]?.paid;
     const cat=getCat(f.categoryId);
     const card=getCard(f.cardId);
+    const acc=getAccount(f.account);
     return `<div class="fixed-item ${paid?'paid':''}">
       <div class="fixed-check ${paid?'checked':''}" onclick="toggleFixedPaid('${f.id}')">
         ${paid?'✓':''}
@@ -1448,6 +1498,7 @@ function renderFixedSection(){
         <div class="fixed-meta">
           ${cat.icon} ${cat.name}
           ${card?`· <span style="color:${card.color}">${card.name}</span>`:''}
+          ${acc?`· ${acc.name}`:''}
           ${f.dayOfMonth?`· vence dia ${f.dayOfMonth}`:''}
           · <span class="${paid?'paid-badge':'pending-badge'}">${paid?'✓ Pago':'● Pendente'}</span>
         </div>
@@ -1492,6 +1543,7 @@ function toggleFixedPaid(fixedId){
       id:expId, amount:f.amount, desc:f.desc,
       categoryId:f.categoryId, cardId:f.cardId,
       date, isPJ:f.isPJ||false, paymentMethod:f.paymentMethod||'credito',
+      account:f.account||'',
       installments:1, fromFixed:fixedId,
     });
     state.fixedPayments[k]={ paid:true, expenseId:expId };
@@ -1882,6 +1934,212 @@ function deleteInvestment(id){
   if(!confirm('Remover este investimento?')) return;
   state.investments=state.investments.filter(i=>i.id!==id);
   saveState(); renderApp();
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECONCILIATION
+// ═══════════════════════════════════════════════════════════
+function renderReconciliation(){
+  const monthTxns=state.bankTransactions.filter(t=>monthKey(t.date)===viewMonth).sort((a,b)=>b.date.localeCompare(a.date));
+  const unmatched=monthTxns.filter(t=>!t.matched);
+  const matched=monthTxns.filter(t=>t.matched);
+
+  return `
+  <div class="view active">
+    <div class="header">
+      <div class="header-row">
+        <div><div class="header h1" style="font-size:17px">Conciliação</div><div class="subtitle">Extrato bancário</div></div>
+        <div class="month-nav">
+          <button onclick="prevMonth()">‹</button>
+          <div class="month-name">${monthName(viewMonth)}</div>
+          <button onclick="nextMonth()">›</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="sc-label">Transações</div>
+        <div class="sc-value">${monthTxns.length}</div>
+        <div class="sc-sub">${matched.length} conciliada${matched.length!==1?'s':''}</div>
+      </div>
+      <div class="summary-card" style="border-left:3px solid ${unmatched.length>0?'var(--danger)':'var(--income)'}">
+        <div class="sc-label">Pendentes</div>
+        <div class="sc-value" style="color:${unmatched.length>0?'var(--danger)':'var(--income)'}">${unmatched.length}</div>
+        <div class="sc-sub">${unmatched.length>0?'verificar':'tudo ok 🎉'}</div>
+      </div>
+    </div>
+
+    ${unmatched.length>0?`
+    <div class="section"><div class="section-title" style="color:var(--danger)">⚠ Pendentes de conciliação</div></div>
+    <div class="expense-list">
+      ${unmatched.map(t=>{
+        const acc=getAccount(t.accountId);
+        return `<div class="expense-item" style="border-left:3px solid var(--danger)">
+          <div class="cat-dot" style="background:#FDF0EF;color:var(--danger);font-size:14px">${t.isDebit?'↓':'↑'}</div>
+          <div class="expense-info">
+            <div class="expense-desc">${t.desc||'Sem descrição'}</div>
+            <div class="expense-meta">${fmtDate(t.date)}${acc?` · ${acc.name}`:''}</div>
+          </div>
+          <div class="expense-right">
+            <div class="expense-amount ${t.isDebit?'':'income-amount'}">${t.isDebit?'−':'+'}${fmt(t.amount)}</div>
+          </div>
+          <button onclick="openMatchTransaction('${t.id}')" style="background:none;border:1px solid #D4BFE0;border-radius:12px;color:#9B7FA6;font-size:10px;padding:3px 8px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">Conciliar</button>
+        </div>`;
+      }).join('')}
+    </div>`:''}
+
+    <div class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="section-title" style="margin-bottom:0">Todas as transações</div>
+        ${state.bankTransactions.filter(t=>!t.matched&&monthKey(t.date)===viewMonth).length>0
+          ?`<button onclick="autoMatchTransactions()" style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:16px;border:none;background:var(--income-bg);color:var(--income);cursor:pointer;font-family:inherit">⚡ Auto-conciliar</button>`:''}
+      </div>
+    </div>
+    <div class="expense-list">
+      ${monthTxns.length===0
+        ?`<div class="empty-state"><div class="icon">🏦</div><p>Nenhuma transação este mês.<br>Toque em + para adicionar.</p></div>`
+        :monthTxns.map(t=>{
+          const acc=getAccount(t.accountId);
+          return `<div class="expense-item">
+            <div class="cat-dot" style="background:${t.matched?'var(--income-bg)':'var(--surface2)'};color:${t.matched?'var(--income)':'var(--text-mid)'};font-size:13px">${t.matched?'✓':'?'}</div>
+            <div class="expense-info">
+              <div class="expense-desc">${t.desc||'Sem descrição'}</div>
+              <div class="expense-meta">${fmtDate(t.date)}${acc?` · ${acc.name}`:''}${t.matched?` · <span style="color:var(--income);font-weight:600">Conciliada</span>`:''}</div>
+            </div>
+            <div class="expense-right">
+              <div class="expense-amount ${t.isDebit?'':'income-amount'}">${t.isDebit?'−':'+'}${fmt(t.amount)}</div>
+            </div>
+            <button class="expense-delete" onclick="deleteBankTransaction('${t.id}')">✕</button>
+          </div>`;
+        }).join('')
+      }
+    </div>
+    <div style="height:16px"></div>
+  </div>
+  <button class="fab" onclick="openAddBankTransaction()">+</button>`;
+}
+
+function openAddBankTransaction(){
+  const today=new Date().toISOString().slice(0,10);
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Nova Transação Bancária</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div class="form-group">
+      <label class="form-label">Tipo</label>
+      <div style="display:flex;gap:8px">
+        <button class="pm-pill active" id="bt-debit" type="button" onclick="document.getElementById('bt-debit').classList.add('active');document.getElementById('bt-credit').classList.remove('active')">↓ Saída (débito)</button>
+        <button class="pm-pill" id="bt-credit" type="button" onclick="document.getElementById('bt-credit').classList.add('active');document.getElementById('bt-debit').classList.remove('active')">↑ Entrada (crédito)</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Valor (R$)</label>
+      <input id="bt-amount" class="form-input" type="number" inputmode="decimal" placeholder="0,00" step="0.01" min="0" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descrição</label>
+      <input id="bt-desc" class="form-input" type="text" placeholder="Ex: PIX recebido, TED, Compra...">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Conta</label>
+        <select id="bt-account" class="form-select" onfocus="this.dataset.prev=this.value" onchange="if(this.value==='__new__')addInlineAccount('bt-account')">${accountSelectOpts()}</select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data</label>
+        <input id="bt-date" class="form-input" type="date" value="${today}">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="submitBankTransaction()">Salvar Transação</button>
+  </div>`);
+}
+
+function submitBankTransaction(){
+  const amount=parseFloat(document.getElementById('bt-amount').value);
+  const desc=document.getElementById('bt-desc').value.trim();
+  const accountId=document.getElementById('bt-account').value;
+  const date=document.getElementById('bt-date').value;
+  const isDebit=document.getElementById('bt-debit').classList.contains('active');
+  if(!amount||amount<=0){showToast('⚠️ Informe o valor');return;}
+  if(!date){showToast('⚠️ Informe a data');return;}
+  state.bankTransactions.push({id:uid(),accountId,date,desc,amount,isDebit,matched:false});
+  saveState();closeModal();renderApp();
+  showToast('✅ Transação salva!');
+}
+
+function deleteBankTransaction(id){
+  if(!confirm('Remover esta transação?')) return;
+  state.bankTransactions=state.bankTransactions.filter(t=>t.id!==id);
+  saveState();renderApp();
+}
+
+function openMatchTransaction(txnId){
+  const t=state.bankTransactions.find(x=>x.id===txnId);
+  if(!t) return;
+  const tol=Math.max(t.amount*0.05,2);
+  const candidates=t.isDebit
+    ? state.expenses.filter(e=>Math.abs(e.amount-t.amount)<=tol&&monthKey(e.date)===monthKey(t.date))
+        .sort((a,b)=>Math.abs(a.amount-t.amount)-Math.abs(b.amount-t.amount)).slice(0,8)
+    : state.incomes.filter(i=>Math.abs(i.amount-t.amount)<=tol&&monthKey(i.date)===monthKey(t.date))
+        .sort((a,b)=>Math.abs(a.amount-t.amount)-Math.abs(b.amount-t.amount)).slice(0,8);
+
+  const candidateHtml=candidates.length>0
+    ? candidates.map(c=>{
+        const cat=t.isDebit?getCat(c.categoryId):getIncomeCat(c.categoryId);
+        return `<div class="expense-item" style="cursor:pointer;border:1.5px solid transparent" onclick="confirmMatch('${txnId}','${c.id}','${t.isDebit?'expense':'income'}')">
+          <div class="cat-dot" style="background:${cat.color}20">${cat.icon}</div>
+          <div class="expense-info">
+            <div class="expense-desc">${c.desc||'Sem descrição'}</div>
+            <div class="expense-meta">${fmtDate(c.date)} · ${fmt(c.amount)}</div>
+          </div>
+          <div style="color:var(--income);font-size:18px;padding:0 4px">✓</div>
+        </div>`;
+      }).join('')
+    : `<div style="text-align:center;padding:16px;color:var(--text-mid);font-size:13px">Nenhum lançamento compatível no mesmo mês.<br>Use "Marcar sem vínculo" para conciliar mesmo assim.</div>`;
+
+  openSheet(`
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Conciliar Transação</div>
+    <button class="sheet-close" onclick="closeModal()">×</button>
+  </div>
+  <div class="sheet-body">
+    <div style="background:var(--surface2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:600">${t.desc||'Sem descrição'}</div>
+      <div style="font-size:12px;color:var(--text-mid);margin-top:2px">${fmtDate(t.date)} · ${t.isDebit?'−':'+'}${fmt(t.amount)}</div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Lançamentos compatíveis</div>
+    ${candidateHtml}
+    <button class="btn" style="background:var(--surface2);color:var(--text-mid);margin-top:12px" onclick="confirmMatch('${txnId}','','other')">Marcar como conciliada (sem vínculo)</button>
+  </div>`);
+}
+
+function confirmMatch(txnId,itemId,type){
+  const t=state.bankTransactions.find(x=>x.id===txnId);
+  if(!t) return;
+  t.matched=true;t.matchId=itemId;t.matchType=type;
+  saveState();closeModal();renderApp();
+  showToast('✅ Transação conciliada!');
+}
+
+function autoMatchTransactions(){
+  let count=0;
+  state.bankTransactions.filter(t=>!t.matched&&monthKey(t.date)===viewMonth).forEach(t=>{
+    const tol=Math.max(t.amount*0.03,1);
+    const ms=24*3600000;
+    const candidates=t.isDebit
+      ? state.expenses.filter(e=>Math.abs(e.amount-t.amount)<=tol&&Math.abs(new Date(e.date)-new Date(t.date))<=3*ms)
+      : state.incomes.filter(i=>Math.abs(i.amount-t.amount)<=tol&&Math.abs(new Date(i.date)-new Date(t.date))<=3*ms);
+    if(candidates.length===1){
+      t.matched=true;t.matchId=candidates[0].id;t.matchType=t.isDebit?'expense':'income';count++;
+    }
+  });
+  saveState();renderApp();
+  showToast(count>0?`✅ ${count} transaç${count!==1?'ões':'ão'} conciliada${count!==1?'s':''}!`:'Nenhuma correspondência exata encontrada');
 }
 
 // ═══════════════════════════════════════════════════════════
