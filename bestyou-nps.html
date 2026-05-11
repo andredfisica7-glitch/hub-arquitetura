@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Best You Studio — Avaliação do Mês</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --gold: #C9A84C; --gold-light: #E8C97A;
+    --black: #0A0A0A; --dark: #111111; --dark2: #1A1A1A;
+    --white: #FFFFFF; --w60: rgba(255,255,255,0.6); --w30: rgba(255,255,255,0.3); --w10: rgba(255,255,255,0.07);
+    --green: #4ade80; --red: #f87171;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--black); color: var(--white); }
+
+  /* PROGRESS */
+  .progress-wrap { position: fixed; top: 0; left: 0; right: 0; z-index: 50; }
+  .progress-bar-bg { height: 3px; background: rgba(255,255,255,0.08); }
+  .progress-bar-fill { height: 3px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.4s ease; }
+  .progress-label { text-align: center; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--w30); padding: 10px 0 0; }
+
+  /* STEPS */
+  .steps-container { height: 100vh; overflow: hidden; position: relative; }
+  .step {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px 32px 40px;
+    opacity: 0; pointer-events: none;
+    transform: translateX(60px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .step.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+  .step.leaving { opacity: 0; transform: translateX(-60px); }
+
+  .step-inner { width: 100%; max-width: 480px; }
+
+  /* LABELS */
+  .step-tag { font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; }
+  .step-question { font-size: clamp(20px, 5vw, 28px); font-weight: 800; line-height: 1.25; letter-spacing: -0.3px; margin-bottom: 8px; }
+  .step-sub { font-size: 13px; color: var(--w60); margin-bottom: 32px; line-height: 1.5; }
+
+  /* INPUT TEXT */
+  .input-field {
+    width: 100%; background: var(--dark2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 14px 18px;
+    font-size: 15px; color: var(--white); outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  .input-field:focus { border-color: rgba(201,168,76,0.5); }
+  .input-field::placeholder { color: var(--w30); }
+
+  /* SELECT */
+  .select-field {
+    width: 100%; background: var(--dark2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 14px 18px;
+    font-size: 15px; color: var(--white); outline: none;
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23C9A84C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 18px center;
+    padding-right: 44px;
+    transition: border-color 0.2s;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  .select-field:focus { border-color: rgba(201,168,76,0.5); }
+  .select-field option { background: var(--dark2); color: var(--white); }
+
+  /* RATING */
+  .rating-options { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .rating-opt {
+    flex: 1; min-width: 52px;
+    background: var(--dark2); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 16px 8px;
+    text-align: center; cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .rating-opt:hover { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.05); }
+  .rating-opt.selected { border-color: var(--gold); background: rgba(201,168,76,0.1); }
+  .rating-num { font-size: 20px; font-weight: 800; color: var(--white); display: block; margin-bottom: 4px; }
+  .rating-opt.selected .rating-num { color: var(--gold); }
+  .rating-label { font-size: 10px; color: var(--w30); letter-spacing: 0.5px; }
+  .rating-opt.selected .rating-label { color: rgba(201,168,76,0.7); }
+
+  .rating-labels-row { display: flex; justify-content: space-between; font-size: 10px; color: var(--w30); margin-bottom: 28px; }
+
+  /* TEXTAREA */
+  .motivo-wrap { margin-top: 4px; margin-bottom: 4px; }
+  .motivo-label { font-size: 11px; color: var(--w30); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  textarea.input-field { resize: none; height: 80px; font-size: 13px; margin-bottom: 0; }
+
+  /* BUTTON */
+  .btn-next {
+    width: 100%; padding: 16px;
+    background: var(--gold); border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: var(--black); cursor: pointer;
+    transition: all 0.2s; margin-top: 24px;
+    font-family: inherit;
+  }
+  .btn-next:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-next:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  .btn-back {
+    background: none; border: none; color: var(--w30); font-size: 12px;
+    cursor: pointer; letter-spacing: 1px; text-transform: uppercase; padding: 12px 0 0;
+    display: block; width: 100%; text-align: center;
+    font-family: inherit; transition: color 0.2s;
+  }
+  .btn-back:hover { color: var(--w60); }
+
+  /* SUCCESS */
+  .success-icon { font-size: 48px; margin-bottom: 20px; }
+  .success-title { font-size: 28px; font-weight: 800; margin-bottom: 10px; }
+  .success-sub { font-size: 14px; color: var(--w60); line-height: 1.65; max-width: 360px; text-align: center; }
+
+  /* ERROR STATE */
+  .field-error { font-size: 11px; color: var(--red); margin-top: -8px; margin-bottom: 10px; }
+
+  /* SENDING OVERLAY */
+  .sending-overlay {
+    position: fixed; inset: 0; background: rgba(10,10,10,0.9);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .sending-overlay.visible { opacity: 1; pointer-events: all; }
+  .spinner {
+    width: 36px; height: 36px; border: 2px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold); border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin-bottom: 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .sending-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--w60); }
+
+  @media (max-width: 480px) {
+    .step { padding: 56px 20px 32px; }
+    .rating-opt { padding: 14px 6px; }
+    .rating-num { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS -->
+<div class="progress-wrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+  <div class="progress-label" id="progressLabel"></div>
+</div>
+
+<!-- SENDING OVERLAY -->
+<div class="sending-overlay" id="sendingOverlay">
+  <div class="spinner"></div>
+  <div class="sending-label">Enviando avaliação...</div>
+</div>
+
+<div class="steps-container" id="stepsContainer">
+
+  <!-- STEP 1 — Identificação -->
+  <div class="step active" id="step-1">
+    <div class="step-inner">
+      <div class="step-tag">Best You Studio</div>
+      <div class="step-question">Avaliação do mês</div>
+      <div class="step-sub">Leva menos de 2 minutos. Suas respostas nos ajudam a melhorar sua experiência.</div>
+
+      <input class="input-field" type="text" id="nomeAluno" placeholder="Seu nome completo" autocomplete="name" />
+      <select class="select-field" id="personalTrainer">
+        <option value="" disabled selected>Seu personal trainer</option>
+        <option>André Souza</option>
+        <option>Elen Cristina de F. Silva</option>
+        <option>Ewerton Mingotti</option>
+        <option>Giovanna de Castro Cayres</option>
+        <option>Kaue Andrade</option>
+        <option>Levi de Souza Teixeira</option>
+        <option>Lucas Godoy</option>
+        <option>Maiara Pereira Miquelini</option>
+        <option>Rafael Favilla</option>
+        <option>Rafael Soares</option>
+        <option>Raphael Kriegler Higuera</option>
+        <option>Vinicius Prebianchi</option>
+        <option>Luan Roque</option>
+        <option>Vagner Silva</option>
+        <option>Bruno Campetéla</option>
+        <option>Dominique Leiros</option>
+      </select>
+
+      <button class="btn-next" onclick="goNext(1)">Começar avaliação</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 — Aula do personal -->
+  <div class="step" id="step-2">
+    <div class="step-inner">
+      <div class="step-tag">Questão 1 de 5</div>
+      <div class="step-question">Como você avalia a qualidade das suas aulas?</div>
+      <div class="step-sub">Considere o atendimento, atenção e condução do seu personal trainer.</div>
+
+      <div class="rating-options" id="rating-aula">
+        <div class="rating-opt" onclick="selectRating('aula', 1, this)"><span class="rating-num">1</span><span class="rating-label">Ruim</span></div>
+        <div class="rating-opt" onclick="selectRating('aula', 2, this)"><span class="rating-num">2</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('aula', 3, this)"><span class="rating-num">3</span><span class="rating-label">Regular</span></div>
+        <div class="rating-opt" onclick="selectRating('aula', 4, this)"><span class="rating-num">4</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('aula', 5, this)"><span class="rating-num">5</span><span class="rating-label">Ótimo</span></div>
+      </div>
+
+      <button class="btn-next" id="btn-2" onclick="goNext(2)" disabled>Próximo</button>
+      <button class="btn-back" onclick="goBack(2)">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 — Intensidade -->
+  <div class="step" id="step-3">
+    <div class="step-inner">
+      <div class="step-tag">Questão 2 de 5</div>
+      <div class="step-question">Como você avalia a intensidade dos treinos?</div>
+      <div class="step-sub">O nível de esforço está adequado aos seus objetivos?</div>
+
+      <div class="rating-options" id="rating-intensidade">
+        <div class="rating-opt" onclick="selectRating('intensidade', 1, this)"><span class="rating-num">1</span><span class="rating-label">Fraca</span></div>
+        <div class="rating-opt" onclick="selectRating('intensidade', 2, this)"><span class="rating-num">2</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('intensidade', 3, this)"><span class="rating-num">3</span><span class="rating-label">Adequada</span></div>
+        <div class="rating-opt" onclick="selectRating('intensidade', 4, this)"><span class="rating-num">4</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('intensidade', 5, this)"><span class="rating-num">5</span><span class="rating-label">Excelente</span></div>
+      </div>
+
+      <button class="btn-next" id="btn-3" onclick="goNext(3)" disabled>Próximo</button>
+      <button class="btn-back" onclick="goBack(3)">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 — Reposições -->
+  <div class="step" id="step-4">
+    <div class="step-inner">
+      <div class="step-tag">Questão 3 de 5</div>
+      <div class="step-question">Como avalia o oferecimento de reposições?</div>
+      <div class="step-sub">Disponibilidade e facilidade para reagendar aulas quando necessário.</div>
+
+      <div class="rating-options" id="rating-reposicoes">
+        <div class="rating-opt" onclick="selectRating('reposicoes', 1, this)"><span class="rating-num">1</span><span class="rating-label">Ruim</span></div>
+        <div class="rating-opt" onclick="selectRating('reposicoes', 2, this)"><span class="rating-num">2</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('reposicoes', 3, this)"><span class="rating-num">3</span><span class="rating-label">Regular</span></div>
+        <div class="rating-opt" onclick="selectRating('reposicoes', 4, this)"><span class="rating-num">4</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('reposicoes', 5, this)"><span class="rating-num">5</span><span class="rating-label">Ótimo</span></div>
+      </div>
+
+      <div class="motivo-wrap" style="margin-top:20px;">
+        <label class="motivo-label">Quantas aulas você possui a repor?</label>
+        <div class="rating-options" id="rating-aulasrepor" style="flex-wrap:wrap;">
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 0, this)" style="flex:none;min-width:60px;"><span class="rating-num">0</span></div>
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 1, this)" style="flex:none;min-width:60px;"><span class="rating-num">1</span></div>
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 2, this)" style="flex:none;min-width:60px;"><span class="rating-num">2</span></div>
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 3, this)" style="flex:none;min-width:60px;"><span class="rating-num">3</span></div>
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 4, this)" style="flex:none;min-width:60px;"><span class="rating-num">4</span></div>
+          <div class="rating-opt" onclick="selectRating('aulasrepor', 5, this)" style="flex:none;min-width:60px;"><span class="rating-num">5+</span></div>
+        </div>
+      </div>
+
+      <button class="btn-next" id="btn-4" onclick="goNext(4)" disabled>Próximo</button>
+      <button class="btn-back" onclick="goBack(4)">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 — Limpeza -->
+  <div class="step" id="step-5">
+    <div class="step-inner">
+      <div class="step-tag">Questão 4 de 5</div>
+      <div class="step-question">Como avalia a limpeza do studio?</div>
+      <div class="step-sub">Equipamentos, vestiário e áreas comuns.</div>
+
+      <div class="rating-options" id="rating-limpeza">
+        <div class="rating-opt" onclick="selectRating('limpeza', 1, this)"><span class="rating-num">1</span><span class="rating-label">Ruim</span></div>
+        <div class="rating-opt" onclick="selectRating('limpeza', 2, this)"><span class="rating-num">2</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('limpeza', 3, this)"><span class="rating-num">3</span><span class="rating-label">Regular</span></div>
+        <div class="rating-opt" onclick="selectRating('limpeza', 4, this)"><span class="rating-num">4</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('limpeza', 5, this)"><span class="rating-num">5</span><span class="rating-label">Ótimo</span></div>
+      </div>
+
+      <div class="motivo-wrap">
+        <label class="motivo-label">Quer comentar algo sobre a limpeza? <span style="color:var(--w30)">(opcional)</span></label>
+        <textarea class="input-field" id="motivoLimpeza" placeholder="Escreva aqui..." rows="3"></textarea>
+      </div>
+
+      <button class="btn-next" id="btn-5" onclick="goNext(5)" disabled>Próximo</button>
+      <button class="btn-back" onclick="goBack(5)">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- STEP 6 — Estrutura -->
+  <div class="step" id="step-6">
+    <div class="step-inner">
+      <div class="step-tag">Questão 5 de 5</div>
+      <div class="step-question">Como avalia a estrutura física do studio?</div>
+      <div class="step-sub">Equipamentos, conforto, temperatura e ambiente geral.</div>
+
+      <div class="rating-options" id="rating-estrutura">
+        <div class="rating-opt" onclick="selectRating('estrutura', 1, this)"><span class="rating-num">1</span><span class="rating-label">Ruim</span></div>
+        <div class="rating-opt" onclick="selectRating('estrutura', 2, this)"><span class="rating-num">2</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('estrutura', 3, this)"><span class="rating-num">3</span><span class="rating-label">Regular</span></div>
+        <div class="rating-opt" onclick="selectRating('estrutura', 4, this)"><span class="rating-num">4</span><span class="rating-label"></span></div>
+        <div class="rating-opt" onclick="selectRating('estrutura', 5, this)"><span class="rating-num">5</span><span class="rating-label">Ótimo</span></div>
+      </div>
+
+      <div class="motivo-wrap">
+        <label class="motivo-label">Quer comentar algo sobre a estrutura? <span style="color:var(--w30)">(opcional)</span></label>
+        <textarea class="input-field" id="motivoEstrutura" placeholder="Escreva aqui..." rows="3"></textarea>
+      </div>
+
+      <button class="btn-next" id="btn-6" onclick="submitForm()" disabled>Enviar avaliação</button>
+      <button class="btn-back" onclick="goBack(6)">← Voltar</button>
+    </div>
+  </div>
+
+  <!-- STEP 7 — Sucesso -->
+  <div class="step" id="step-7">
+    <div class="step-inner" style="text-align:center;display:flex;flex-direction:column;align-items:center;">
+      <div class="success-icon">✦</div>
+      <div class="success-title">Obrigado, <span id="nomeConfirmacao" style="color:var(--gold)"></span>!</div>
+      <div class="success-sub">Sua avaliação foi registrada. O feedback de cada aluno é o que nos guia para entregar cada vez mais.</div>
+      <div style="margin-top:32px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--w30);">Best You Studio</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── CONFIGURAÇÃO ──────────────────────────────────────────────
+  // Cole aqui a URL do seu Google Apps Script após publicar como Web App
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbze3tdlUh8IUvnsxcKoguYkrDfeUpVLP9IIlZWKNxu_VwKHSfwrmbW4D2ARARXqPS-y7w/exec';
+  // ─────────────────────────────────────────────────────────────
+
+  const TOTAL_STEPS = 6;
+  let currentStep = 1;
+  const ratings = { aula: null, intensidade: null, reposicoes: null, aulasrepor: null, limpeza: null, estrutura: null };
+
+  function updateProgress() {
+    const pct = ((currentStep - 1) / (TOTAL_STEPS - 1)) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    if (currentStep === 1) {
+      document.getElementById('progressLabel').textContent = 'Best You Studio · Avaliação Mensal';
+    } else if (currentStep === 7) {
+      document.getElementById('progressLabel').textContent = '';
+      document.getElementById('progressFill').style.width = '100%';
+    } else {
+      document.getElementById('progressLabel').textContent = `Questão ${currentStep - 1} de 5`;
+    }
+  }
+
+  function showStep(n) {
+    const current = document.getElementById('step-' + currentStep);
+    current.classList.add('leaving');
+    setTimeout(() => {
+      current.classList.remove('active', 'leaving');
+      currentStep = n;
+      const next = document.getElementById('step-' + n);
+      next.classList.add('active');
+      updateProgress();
+    }, 300);
+  }
+
+  function goNext(from) {
+    if (from === 1) {
+      const nome = document.getElementById('nomeAluno').value.trim();
+      const pt = document.getElementById('personalTrainer').value;
+      if (!nome || !pt) { return; }
+    }
+    showStep(from + 1);
+  }
+
+  function goBack(from) {
+    showStep(from - 1);
+  }
+
+  function selectRating(field, value, el) {
+    ratings[field] = value;
+    const container = document.getElementById('rating-' + field);
+    container.querySelectorAll('.rating-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    const stepNum = { aula: 2, intensidade: 3, reposicoes: 4, limpeza: 5, estrutura: 6 }[field];
+    document.getElementById('btn-' + stepNum).disabled = false;
+  }
+
+  async function submitForm() {
+    const nome = document.getElementById('nomeAluno').value.trim();
+    const pt = document.getElementById('personalTrainer').value;
+
+    const payload = {
+      timestamp: new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+      nome: nome,
+      personal: pt,
+      notaAula: ratings.aula,
+      notaIntensidade: ratings.intensidade,
+      notaReposicoes: ratings.reposicoes,
+      aulasARepor: ratings.aulasrepor !== null ? ratings.aulasrepor : '—',
+      notaLimpeza: ratings.limpeza,
+      motivoLimpeza: document.getElementById('motivoLimpeza').value.trim() || '—',
+      notaEstrutura: ratings.estrutura,
+      motivoEstrutura: document.getElementById('motivoEstrutura').value.trim() || '—'
+    };
+
+    document.getElementById('sendingOverlay').classList.add('visible');
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (e) {
+      // no-cors não retorna erro legível — continua para sucesso
+    }
+
+    document.getElementById('sendingOverlay').classList.remove('visible');
+    document.getElementById('nomeConfirmacao').textContent = nome.split(' ')[0];
+    showStep(7);
+  }
+
+  // Habilitar botão do step 1 em tempo real
+  function checkStep1() {
+    const nome = document.getElementById('nomeAluno').value.trim();
+    const pt = document.getElementById('personalTrainer').value;
+    // O botão do step 1 não tem id "btn-1", fica sempre ativo — validação no clique
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
